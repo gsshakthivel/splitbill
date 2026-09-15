@@ -36,4 +36,22 @@ const getGroupDetailsByGroupId = async (groupId) => {
     return result;
 }
 
-export { createGroup, addUserToGroup, getGroupsByUserId, getGroupMember, addGroupMember, getGroupDetailsByGroupId };
+const hasUserExpensesInGroup = async (groupId, userId) => {
+    const query = `
+        SELECT EXISTS (
+            SELECT 1 FROM expenses WHERE group_id = ? AND paid_by = ?
+            UNION ALL
+            SELECT 1 FROM expense_splits AS es JOIN expenses AS e ON es.expense_id = e.id WHERE e.group_id = ? AND es.user_id = ?
+        ) AS has_expenses
+    `;
+    const [result] = await pool.execute(query, [groupId, userId, groupId, userId]);
+    return Boolean(Number(result[0]?.has_expenses));
+}
+
+const removeGroupMember = async (groupId, userId) => {
+    const query = `DELETE FROM group_members WHERE group_id = ? AND user_id = ?`;
+    const [result] = await pool.execute(query, [groupId, userId]);
+    return result;
+}
+
+export { createGroup, addUserToGroup, getGroupsByUserId, getGroupMember, addGroupMember, getGroupDetailsByGroupId, hasUserExpensesInGroup, removeGroupMember };

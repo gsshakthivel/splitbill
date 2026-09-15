@@ -1,5 +1,7 @@
 import pool from "../config/db.js";
-import { createGroup as createGroupRepository, addUserToGroup, getGroupsByUserId as getGroupsByUserIdRepository, getGroupMember, addGroupMember as addGroupMemberRepository, getGroupDetailsByGroupId as getGroupDetailsByGroupIdRepository } from "../repositories/group.repository.js";
+import { createGroup as createGroupRepository, addUserToGroup, getGroupsByUserId as getGroupsByUserIdRepository,
+     getGroupMember, addGroupMember as addGroupMemberRepository, getGroupDetailsByGroupId as getGroupDetailsByGroupIdRepository, 
+     hasUserExpensesInGroup, removeGroupMember as removeGroupMemberRepository } from "../repositories/group.repository.js";
 import { findUserById } from "../repositories/user.repository.js";
 import AppError from "../utils/errors.js";
 
@@ -61,4 +63,28 @@ const getGroupDetailsService = async (groupId, currentUserId) => {
         };
 }
 
-export { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService };
+const removeGroupMemberService = async (groupId, targetUserId, currentUserId) => {
+    const requesterMembership = await getGroupMember(groupId, currentUserId);
+    if (requesterMembership.length === 0 || requesterMembership[0].role !== "owner") {
+        throw new AppError("User not permitted to remove member", 403);
+    }
+
+    if (String(targetUserId) === String(currentUserId)) {
+        throw new AppError("Owner cannot remove themselves from the group", 400);
+    }
+
+    const targetUserMembership = await getGroupMember(groupId, targetUserId);
+    if (targetUserMembership.length === 0) {
+        throw new AppError("User is not a member of this group", 404);
+    }
+
+    const hasExpenses = await hasUserExpensesInGroup(groupId, targetUserId);
+    if (hasExpenses) {
+        throw new AppError("Cannot remove member with existing expense history", 409);
+    }
+
+    await removeGroupMemberRepository(groupId, targetUserId);
+    return { message: "Group member removed successfully" };
+}
+
+export { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, removeGroupMemberService };

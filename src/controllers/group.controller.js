@@ -1,4 +1,4 @@
-import { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService } from "../services/group.service.js";
+import { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, removeGroupMemberService } from "../services/group.service.js";
 
 const createGroup = async (req, res) => {
     const { name } = req.body;
@@ -28,4 +28,11 @@ const getGroupDetails = async (req, res) => {
     res.status(200).json(result);
 }
 
-export { createGroup, getGroups, addGroupMember, getGroupDetails };
+const removeGroupMember = async (req, res) => {
+    const { groupId, userId } = req.params;
+    const { id } = req.user;
+    const result = await removeGroupMemberService(groupId, userId, id);
+    res.status(200).json(result);
+}
+
+export { createGroup, getGroups, addGroupMember, getGroupDetails, removeGroupMember };
