@@ -44,9 +44,16 @@ const updateExpense = async (connection, groupId, expenseId, paidBy, amount, des
     return { id: expenseId, group_id: groupId, paid_by: paidBy, amount: amount, description: description, split_type: splitType, updated_by: updatedBy };
 }
 
+const deleteExpense = async (connection, expenseId) => {
+    const query = `DELETE FROM expenses WHERE id = ?`;
+    const [result] = await connection.execute(query, [expenseId]);
+
+    return result.affectedRows;
+};
+
 const deleteExpenseSplits = async (connection, expenseId) => {
     const query = `DELETE FROM expense_splits WHERE expense_id = ?`;
     await connection.execute(query, [expenseId]);
 };
 
-export { createExpense, createExpenseSplit, getExpensesByGroupId, getExpenseById, getExpenseForUpdate, updateExpense, deleteExpenseSplits };
+export { createExpense, createExpenseSplit, getExpensesByGroupId, getExpenseById, getExpenseForUpdate, updateExpense, deleteExpense, deleteExpenseSplits  };

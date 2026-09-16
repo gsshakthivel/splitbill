@@ -1,4 +1,4 @@
-import { createExpenseService, getExpensesService, getExpenseByIdService, updateExpenseService } from "../services/expense.service.js";
+import { createExpenseService, getExpensesService, getExpenseByIdService, updateExpenseService, deleteExpenseService } from "../services/expense.service.js";
 import AppError from "../utils/errors.js";
 
 const createExpense = async (req, res) => {
@@ -42,4 +42,23 @@ const updateExpense = async (req, res) => {
     res.status(200).json({message: "Expense updated successfully", expense: result});
 }   
 
-export { createExpense, getExpenses, getExpenseById, updateExpense };
+const deleteExpense = async (req, res) => {
+    const { groupId, expenseId } = req.params;
+    const { id } = req.user;
+
+    const groupIdNumber = Number(groupId);
+    const expenseIdNumber = Number(expenseId);
+
+    if (!Number.isInteger(groupIdNumber) || groupIdNumber <= 0) {
+        throw new AppError("Invalid groupId", 400);
+    }
+
+    if (!Number.isInteger(expenseIdNumber) || expenseIdNumber <= 0) {
+        throw new AppError("Invalid expenseId", 400);
+    }
+
+    const result = await deleteExpenseService(groupIdNumber, expenseIdNumber, id);
+    res.status(200).json({ message: "Expense deleted successfully", expense: result });
+};
+
+export { createExpense, getExpenses, getExpenseById, updateExpense, deleteExpense };

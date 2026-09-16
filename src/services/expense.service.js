@@ -4,7 +4,7 @@ import { getGroupMember, getGroupMemberTransaction } from "../repositories/group
 import { createExpense as createExpenseRepository, createExpenseSplit as createExpenseSplitRepository, 
     getExpensesByGroupId, getExpenseById as getExpenseByIdRepository, 
     getExpenseForUpdate as getExpenseForUpdateRepository, updateExpense as updateExpenseRepository, 
-    deleteExpenseSplits as deleteExpenseSplitsRepository } from "../repositories/expense.repository.js";
+    deleteExpenseSplits as deleteExpenseSplitsRepository, deleteExpense as deleteExpenseRepository } from "../repositories/expense.repository.js";
 
 const createExpenseService = async (groupId, paidBy, amount, description, splitType, createdBy, splits) => {
     
@@ -215,4 +215,41 @@ const updateExpenseService = async (groupId, expenseId, userId, description, amo
     
 }   
 
-export { createExpenseService, getExpensesService, getExpenseByIdService, updateExpenseService };
+const deleteExpenseService = async (groupId, expenseId, userId) => {
+    const connection = await pool.getConnection();
+    let transactionStarted = false;
+
+    try {
+        const groupMember = await getGroupMemberTransaction(connection, groupId, userId);
+        if (groupMember.length === 0) {
+            throw new AppError("You are not a part of this group", 403);
+        }
+        const expense = await getExpenseForUpdateRepository(connection, groupId, expenseId);
+        if (expense.length === 0) {
+                throw new AppError("Expense not found", 404);
+        }
+        if (expense[0].created_by !== userId) {
+            throw new AppError("You are not authorized to delete this expense", 403);
+        }
+    
+        await connection.beginTransaction();
+        transactionStarted = true;
+
+        await deleteExpenseSplitsRepository(connection, expenseId);
+        const deletedRows = await deleteExpenseRepository(connection, expenseId);
+        if (deletedRows !== 1) {
+            throw new AppError("Expense could not be deleted", 500);
+        }
+        await connection.commit();
+        return { expenseId };
+    } catch (error) {
+        if (transactionStarted) {
+            await connection.rollback();
+        }
+        throw error;
+    } finally {
+        connection.release();
+    }
+}
+
+export { createExpenseService, getExpensesService, getExpenseByIdService, updateExpenseService, deleteExpenseService };
