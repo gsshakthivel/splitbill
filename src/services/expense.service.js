@@ -1,0 +1,218 @@
+import pool from "../config/db.js";
+import AppError from "../utils/errors.js";
+import { getGroupMember, getGroupMemberTransaction } from "../repositories/group.repository.js";
+import { createExpense as createExpenseRepository, createExpenseSplit as createExpenseSplitRepository, 
+    getExpensesByGroupId, getExpenseById as getExpenseByIdRepository, 
+    getExpenseForUpdate as getExpenseForUpdateRepository, updateExpense as updateExpenseRepository, 
+    deleteExpenseSplits as deleteExpenseSplitsRepository } from "../repositories/expense.repository.js";
+
+const createExpenseService = async (groupId, paidBy, amount, description, splitType, createdBy, splits) => {
+    
+        if (description === null || description === undefined || typeof description !== 'string' || description.trim().length === 0 || description.trim().length > 100 ) {
+            throw new AppError("Description is required and should be less than 100 characters", 400);
+        }
+        if (typeof amount !== 'number' || Number.isFinite(amount) === false || amount <= 0 || !Number.isInteger(amount * 100) ) {
+            throw new AppError("Amount is required and should be greater than 0", 400);
+        }
+        if (typeof splitType !== 'string' || splitType !== "equal") {
+            throw new AppError("Invalid split type", 400);  
+        }
+        if(!Array.isArray(splits) || splits.length === 0) {
+            throw new AppError("Splits members are required", 400);
+        }
+        const isValidSplits = splits.every(member => 
+            member !== null && typeof member === "object" && !Array.isArray(member) 
+            && Number.isInteger(member.userId) && member.userId > 0 );  
+        if (!isValidSplits) {
+            throw new AppError("Each split must contain a valid userId", 400);
+        }
+
+        const connection = await pool.getConnection();
+        let transactionStarted = false;
+        try {
+            
+        const userPermittedToCreateExpense = await getGroupMemberTransaction(connection, groupId, createdBy);
+        if (userPermittedToCreateExpense.length === 0) {
+            throw new AppError("You are not a part of this group", 403);
+        }
+        
+        const paidByGroupMembers = await getGroupMemberTransaction(connection, groupId, paidBy);
+        if (paidByGroupMembers.length === 0) {
+            throw new AppError("The person who paid the amount is not a part of this group", 403);
+        }
+        for (const  member of splits) {
+            const userSplits = await getGroupMemberTransaction(connection, groupId, member.userId);
+            if (userSplits.length === 0) {
+                throw new AppError("The person who is participating in splits is not a part of this group", 403);
+            }       
+            
+        }
+        const isMemberInSplits = splits.some(member => member.userId === createdBy);
+        if(createdBy !== paidBy && !isMemberInSplits ) {
+            throw new AppError("You are not authorized to create this expense", 403);
+        }
+        const userIds = splits.map(split => split.userId);
+        const uniqueUserIds = new Set(userIds);
+        if (uniqueUserIds.size !== userIds.length) {
+            throw new AppError("Duplicate users in splits", 400);
+        }
+        await connection.beginTransaction();
+        transactionStarted = true;
+        const expense = await createExpenseRepository(connection, groupId, paidBy, amount, description, splitType, createdBy);
+        if (splitType === "equal") {
+            const totalPaise = amount * 100;
+            const baseSharePaise = Math.floor(totalPaise / splits.length);
+            const remainderPaise = totalPaise % splits.length;  
+            
+            for (let member = 0; member < splits.length; member++) {
+                let shareAmount;
+                if (member === splits.length - 1) {
+                    shareAmount = (baseSharePaise + remainderPaise) / 100;
+                } else {
+                    shareAmount = baseSharePaise / 100;
+                }
+                await createExpenseSplitRepository(connection, expense.id, splits[member].userId, shareAmount);
+            }
+        }
+        await connection.commit();
+        return expense;
+    } catch (error) {
+        if (transactionStarted) {
+            await connection.rollback();
+        }
+        throw error;
+    } finally {
+        connection.release();
+    }
+}   
+
+const getExpensesService = async (groupId, userId) => {
+    const groupMember = await getGroupMember(groupId, userId);
+    if (groupMember.length === 0) {
+        throw new AppError("You are not a part of this group", 403);
+    }
+    const expenses = await getExpensesByGroupId(groupId, userId);
+    return expenses;
+}
+
+const getExpenseByIdService = async (groupId, expenseId, userId) => {
+    const groupMember = await getGroupMember(groupId, userId);
+    if (groupMember.length === 0) {
+        throw new AppError("You are not a part of this group", 403);
+    }
+    const expense = await getExpenseByIdRepository(groupId, expenseId);
+    if (expense.length === 0) {
+        throw new AppError("Expense not found", 404);
+    }
+    const response = {
+        expenseId: expense[0].expense_id,
+        description: expense[0].description,
+        groupId: expense[0].group_id,
+        amount: expense[0].amount,
+        paidBy: expense[0].paid_by,
+        createdBy: expense[0].created_by,
+        splitType: expense[0].split_type,
+        createdAt: expense[0].created_at,
+
+        splits: expense.map((row) => ({
+            userId: row.user_id,
+            amount: row.split_amount
+        }))
+    };
+
+    return response;
+}
+
+const updateExpenseService = async (groupId, expenseId, userId, description, amount, paidBy, splitType, splits) => {
+    if (description === null || description === undefined || typeof description !== 'string' || description.trim().length === 0 || description.trim().length > 100 ) {
+            throw new AppError("Description is required and should be less than 100 characters", 400);
+        }
+        if (typeof amount !== 'number' || Number.isFinite(amount) === false || amount <= 0 || !Number.isInteger(amount * 100) ) {
+            throw new AppError("Amount is required and should be greater than 0", 400);
+        }
+        if (!Number.isInteger(paidBy) || paidBy <= 0) {
+            throw new AppError("paidBy must be a positive integer", 400);
+}
+        if (typeof splitType !== 'string' || splitType !== "equal") {
+            throw new AppError("Invalid split type", 400);  
+        }
+        if(!Array.isArray(splits) || splits.length === 0) {
+            throw new AppError("Splits members are required", 400);
+        }
+        const isValidSplits = splits.every(member => 
+            member !== null && typeof member === "object" && !Array.isArray(member) 
+            && Number.isInteger(member.userId) && member.userId > 0 );  
+        if (!isValidSplits) {
+            throw new AppError("Each split must contain a valid userId", 400);
+        }
+
+    const connection = await pool.getConnection();
+    let transactionStarted = false;
+    try {
+        const userPermittedToUpdateExpense = await getGroupMemberTransaction(connection, groupId, userId);
+        if (userPermittedToUpdateExpense.length === 0) {
+            throw new AppError("You are not a part of this group", 403);
+        }
+        const expense = await getExpenseForUpdateRepository(connection, groupId, expenseId);
+        if (expense.length === 0) {
+            throw new AppError("Expense not found", 404);
+        }
+        if (expense[0].created_by !== userId) {
+            throw new AppError("You are not authorized to update this expense", 403);
+        }  
+        
+        const paidByGroupMembers = await getGroupMemberTransaction(connection, groupId, paidBy);
+        if (paidByGroupMembers.length === 0) {
+            throw new AppError("The person who paid the amount is not a part of this group", 403);
+        }
+        for (const  member of splits) {
+            const userSplits = await getGroupMemberTransaction(connection, groupId, member.userId);
+            if (userSplits.length === 0) {
+                throw new AppError("The person who is participating in splits is not a part of this group", 403);
+            }       
+            
+        }
+
+        const userIds = splits.map(split => split.userId);
+        const uniqueUserIds = new Set(userIds);
+        if (uniqueUserIds.size !== userIds.length) {
+            throw new AppError("Duplicate users in splits", 400);
+        }
+           
+        const normalizedDescription = description.trim();
+
+        await connection.beginTransaction();
+        transactionStarted = true;
+
+        const updatedExpense = await updateExpenseRepository(connection, groupId, expenseId, paidBy, amount, normalizedDescription, splitType, userId);
+
+        await deleteExpenseSplitsRepository(connection, expenseId);
+        if (splitType === "equal") {
+            
+            const totalPaise = amount * 100;
+            const baseSharePaise = Math.floor(totalPaise / splits.length);
+            const remainderPaise = totalPaise % splits.length;
+            for (let member = 0; member < splits.length; member++) {
+                let shareAmount;
+                if (member === splits.length - 1) {
+                    shareAmount = (baseSharePaise + remainderPaise) / 100;
+                } else {
+                    shareAmount = baseSharePaise / 100;
+                }
+                await createExpenseSplitRepository(connection, expenseId, splits[member].userId, shareAmount);
+            }
+        }
+        await connection.commit();
+        return updatedExpense;
+    } catch (error) {
+        if (transactionStarted) {
+            await connection.rollback();
+        }
+        throw error;
+    } finally {
+        connection.release();
+    }
+    
+}   
+
+export { createExpenseService, getExpensesService, getExpenseByIdService, updateExpenseService };

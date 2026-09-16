@@ -24,6 +24,18 @@ const getGroupMember = async (groupId, userId) => {
     return result;
 }
 
+const getGroupMemberTransaction = async (connection, groupId, userId) => {
+    const query = `SELECT gm.group_id, gm.user_id, gm.role FROM group_members AS gm WHERE gm.group_id = ? AND gm.user_id = ?`;
+    const [result] = await connection.execute(query, [groupId, userId]);
+    return result;
+}
+
+const getGroupMembers = async (connection, groupId) => {
+    const query = `SELECT gm.group_id, gm.user_id, gm.role FROM group_members AS gm WHERE gm.group_id = ?`;
+    const [result] = await connection.execute(query, [groupId]);
+    return result;
+}
+
 const addGroupMember = async (groupId, userId, role, createdBy) => {
     const query = `INSERT INTO group_members (group_id, user_id, role, created_by) VALUES (?, ?, ?, ?)`;
     await pool.execute(query, [groupId, userId, role, createdBy]);
@@ -54,4 +66,4 @@ const removeGroupMember = async (groupId, userId) => {
     return result;
 }
 
-export { createGroup, addUserToGroup, getGroupsByUserId, getGroupMember, addGroupMember, getGroupDetailsByGroupId, hasUserExpensesInGroup, removeGroupMember };
+export { createGroup, addUserToGroup, getGroupsByUserId, getGroupMember, getGroupMemberTransaction, getGroupMembers, addGroupMember, getGroupDetailsByGroupId, hasUserExpensesInGroup, removeGroupMember };
