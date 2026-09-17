@@ -25,7 +25,7 @@ const createUser = async (name, email, passwordHash) => {
 }
 
 const findUserById = async (userId) => {
-    try {
+    
         const query = `SELECT * FROM users WHERE id = ?`;
         const [rows] = await pool.execute(query, [userId]);
         
@@ -33,9 +33,6 @@ const findUserById = async (userId) => {
             return rows[0];
         }
         return null;
-    } catch (error) {
-        throw error;
-    }
 }
 
 

@@ -56,4 +56,10 @@ const deleteExpenseSplits = async (connection, expenseId) => {
     await connection.execute(query, [expenseId]);
 };
 
-export { createExpense, createExpenseSplit, getExpensesByGroupId, getExpenseById, getExpenseForUpdate, updateExpense, deleteExpense, deleteExpenseSplits  };
+const getExpenseParticipants = async (connection, expenseId) => {
+    const query = `SELECT user_id FROM expense_splits WHERE expense_id = ?`;
+    const [result] = await connection.execute(query, [expenseId]);
+    return result.map(row => row.user_id);
+};
+
+export { createExpense, createExpenseSplit, getExpensesByGroupId, getExpenseById, getExpenseForUpdate, updateExpense, deleteExpense, deleteExpenseSplits, getExpenseParticipants };

@@ -4,7 +4,9 @@ import { getGroupMember, getGroupMemberTransaction } from "../repositories/group
 import { createExpense as createExpenseRepository, createExpenseSplit as createExpenseSplitRepository, 
     getExpensesByGroupId, getExpenseById as getExpenseByIdRepository, 
     getExpenseForUpdate as getExpenseForUpdateRepository, updateExpense as updateExpenseRepository, 
-    deleteExpenseSplits as deleteExpenseSplitsRepository, deleteExpense as deleteExpenseRepository } from "../repositories/expense.repository.js";
+    deleteExpenseSplits as deleteExpenseSplitsRepository, deleteExpense as deleteExpenseRepository,
+    getExpenseParticipants as getExpenseParticipantsRepository } from "../repositories/expense.repository.js";
+import { createNotification as createNotificationRepository, createNotificationRecipient as createNotificationRecipientRepository } from "../repositories/notifications.repository.js";
 
 const createExpenseService = async (groupId, paidBy, amount, description, splitType, createdBy, splits) => {
     
@@ -56,9 +58,11 @@ const createExpenseService = async (groupId, paidBy, amount, description, splitT
         if (uniqueUserIds.size !== userIds.length) {
             throw new AppError("Duplicate users in splits", 400);
         }
+        const normalizedDescription = description.trim();
+
         await connection.beginTransaction();
         transactionStarted = true;
-        const expense = await createExpenseRepository(connection, groupId, paidBy, amount, description, splitType, createdBy);
+        const expense = await createExpenseRepository(connection, groupId, paidBy, amount, normalizedDescription, splitType, createdBy);
         if (splitType === "equal") {
             const totalPaise = amount * 100;
             const baseSharePaise = Math.floor(totalPaise / splits.length);
@@ -74,6 +78,13 @@ const createExpenseService = async (groupId, paidBy, amount, description, splitT
                 await createExpenseSplitRepository(connection, expense.id, splits[member].userId, shareAmount);
             }
         }
+
+        const recipients = [...uniqueUserIds].filter(userId => userId !== createdBy);
+        const notification = await createNotificationRepository(connection, groupId, createdBy, "expense_created", `${normalizedDescription} expense of ₹${amount.toFixed(2)} was added to the group`);
+        for (const recipient of recipients) {
+            await createNotificationRecipientRepository(connection, notification.id, recipient);
+        }
+
         await connection.commit();
         return expense;
     } catch (error) {
@@ -132,7 +143,7 @@ const updateExpenseService = async (groupId, expenseId, userId, description, amo
         }
         if (!Number.isInteger(paidBy) || paidBy <= 0) {
             throw new AppError("paidBy must be a positive integer", 400);
-}
+        }
         if (typeof splitType !== 'string' || splitType !== "equal") {
             throw new AppError("Invalid split type", 400);  
         }
@@ -178,6 +189,14 @@ const updateExpenseService = async (groupId, expenseId, userId, description, amo
         if (uniqueUserIds.size !== userIds.length) {
             throw new AppError("Duplicate users in splits", 400);
         }
+
+        const isUserInSplits = uniqueUserIds.has(userId);
+
+        if (userId !== paidBy && !isUserInSplits) {
+            throw new AppError("You must be the payer or a participant in the expense", 403);
+        }
+
+        const existingParticipants = await getExpenseParticipantsRepository(connection, expenseId);
            
         const normalizedDescription = description.trim();
 
@@ -202,6 +221,34 @@ const updateExpenseService = async (groupId, expenseId, userId, description, amo
                 await createExpenseSplitRepository(connection, expenseId, splits[member].userId, shareAmount);
             }
         }
+
+        const removedParticipants = existingParticipants.filter(id => !uniqueUserIds.has(id));
+        const addedParticipants = [...uniqueUserIds].filter(id => !existingParticipants.includes(id));
+        const unchangedParticipants = [...uniqueUserIds].filter(id => existingParticipants.includes(id));
+
+        const updatedRecipients = unchangedParticipants.filter(id => id !== userId);
+        const addedRecipients = addedParticipants.filter(id => id !== userId);
+        const removedRecipients = removedParticipants.filter(id => id !== userId);
+
+        if(addedRecipients.length > 0) {
+            const notification = await createNotificationRepository(connection, groupId, userId, "expense_participant_added", `You were added to the ${normalizedDescription} expense of ₹${amount.toFixed(2)}`);
+            for (const recipient of addedRecipients) {
+                await createNotificationRecipientRepository(connection, notification.id, recipient);
+            }
+        }
+        if(updatedRecipients.length > 0) {
+            const notification = await createNotificationRepository(connection, groupId, userId, "expense_updated", `${normalizedDescription} expense of ₹${amount.toFixed(2)} was updated in the group`);
+            for (const recipient of updatedRecipients) {
+                await createNotificationRecipientRepository(connection, notification.id, recipient);
+            }
+        }
+        if(removedRecipients.length > 0) {
+            const notification = await createNotificationRepository(connection, groupId, userId, "expense_participant_removed", `You were removed from the ${normalizedDescription} expense of ₹${amount.toFixed(2)}`);
+            for (const recipient of removedRecipients) {
+                await createNotificationRecipientRepository(connection, notification.id, recipient);
+            }
+        }
+
         await connection.commit();
         return updatedExpense;
     } catch (error) {
@@ -231,6 +278,9 @@ const deleteExpenseService = async (groupId, expenseId, userId) => {
         if (expense[0].created_by !== userId) {
             throw new AppError("You are not authorized to delete this expense", 403);
         }
+
+        const existingParticipants = await getExpenseParticipantsRepository(connection, expenseId);
+        const notificationRecipients = existingParticipants.filter(id => id !== userId);
     
         await connection.beginTransaction();
         transactionStarted = true;
@@ -240,6 +290,15 @@ const deleteExpenseService = async (groupId, expenseId, userId) => {
         if (deletedRows !== 1) {
             throw new AppError("Expense could not be deleted", 500);
         }
+
+        if (notificationRecipients.length > 0) {
+            const normalizedDescription = expense[0].description.trim();
+            const notification = await createNotificationRepository(connection, groupId, userId, "expense_deleted", `${normalizedDescription} expense of ₹${Number(expense[0].amount).toFixed(2)} was deleted from the group`);
+            for (const recipient of notificationRecipients) {
+                await createNotificationRecipientRepository(connection, notification.id, recipient);
+            }
+        }
+
         await connection.commit();
         return { expenseId };
     } catch (error) {

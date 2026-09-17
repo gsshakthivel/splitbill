@@ -69,12 +69,12 @@ const getPairwiseBalance = async (groupId, fromUserId, toUserId) => {
     return result;
 };
 
-const createSettlement = async (groupId, toUserId, amount, fromUserId) => {
+const createSettlement = async (connection, groupId, toUserId, amount, fromUserId) => {
     const query = `
         INSERT INTO settlements (group_id, from_user_id, to_user_id, amount)
         VALUES (?, ?, ?, ?);
     `;
-    const [result] = await pool.execute(query, [groupId, fromUserId, toUserId, amount]);
+    const [result] = await connection.execute(query, [groupId, fromUserId, toUserId, amount]);
     return {
         id: result.insertId,
         groupId,

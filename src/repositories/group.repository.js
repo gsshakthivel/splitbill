@@ -36,9 +36,9 @@ const getGroupMembers = async (connection, groupId) => {
     return result;
 }
 
-const addGroupMember = async (groupId, userId, role, createdBy) => {
+const addGroupMember = async (connection, groupId, userId, role, createdBy) => {
     const query = `INSERT INTO group_members (group_id, user_id, role, created_by) VALUES (?, ?, ?, ?)`;
-    await pool.execute(query, [groupId, userId, role, createdBy]);
+    await connection.execute(query, [groupId, userId, role, createdBy]);
     return { groupId: groupId, userId: userId, createdBy: createdBy };
 }
 
@@ -60,9 +60,9 @@ const hasUserExpensesInGroup = async (groupId, userId) => {
     return Boolean(Number(result[0]?.has_expenses));
 }
 
-const removeGroupMember = async (groupId, userId) => {
+const removeGroupMember = async (connection, groupId, userId) => {
     const query = `DELETE FROM group_members WHERE group_id = ? AND user_id = ?`;
-    const [result] = await pool.execute(query, [groupId, userId]);
+    const [result] = await connection.execute(query, [groupId, userId]);
     return result;
 }
 

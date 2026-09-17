@@ -1,14 +1,21 @@
 import AppError from "../utils/errors.js";
 import { getPairwiseBalance as getPairwiseBalanceRepository, createSettlement as createSettlementRepository,
          getUserSettlements as getUserSettlementsRepository } from "../repositories/settlement.repository.js";
-import { getGroupMember } from "../repositories/group.repository.js";
+import { getGroupMember, getGroupMemberTransaction } from "../repositories/group.repository.js";
+import { createNotification as createNotificationRepository, createNotificationRecipient as createNotificationRecipientRepository } from "../repositories/notifications.repository.js";
+import { findUserById } from "../repositories/user.repository.js";
+import pool from "../config/db.js";
 
 const createSettlementService = async (groupId, toUserId, amount, fromUserId) => {
-    const userIsGroupMember = await getGroupMember(groupId, fromUserId);
+    const connection = await pool.getConnection();
+    let transactionStarted = false;
+    try {   
+        
+    const userIsGroupMember = await getGroupMemberTransaction(connection, groupId, fromUserId);
     if (userIsGroupMember.length === 0) {
         throw new AppError("You are not a member of this group", 403);
     }
-    const toUserIsGroupMember = await getGroupMember(groupId, toUserId);
+    const toUserIsGroupMember = await getGroupMemberTransaction(connection, groupId, toUserId);
     if (toUserIsGroupMember.length === 0) {
         throw new AppError("The person you are trying to settle with is not a member of this group", 403);
     }
@@ -35,8 +42,31 @@ const createSettlementService = async (groupId, toUserId, amount, fromUserId) =>
     if (amount > netDebt) {
         throw new AppError("You cannot settle more than what you owe", 400);
     }
-    const settlement = await createSettlementRepository(groupId, toUserId, amount, fromUserId);
+
+    const fromUserExists = await findUserById(fromUserId);
+    if (fromUserExists === null) {
+        throw new AppError("User not found", 404);
+    }
+    const fromUserName = fromUserExists.name;
+
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const settlement = await createSettlementRepository(connection, groupId, toUserId, amount, fromUserId);
+     
+    const notifyUser = await createNotificationRepository(connection, groupId, fromUserId, "settlement_created", `${fromUserName}  has settled and paid you ₹${amount.toFixed(2)}`);
+    await createNotificationRecipientRepository(connection, notifyUser.id, toUserId);
+    
+    await connection.commit();
     return settlement;      
+    } catch (error) {
+        if (transactionStarted) {
+            await connection.rollback();
+        }
+        throw error;
+    } finally {
+        connection.release();
+    }
 }   
 
 const getUserSettlementsService = async (groupId, userId) => {
