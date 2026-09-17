@@ -66,4 +66,53 @@ const removeGroupMember = async (groupId, userId) => {
     return result;
 }
 
-export { createGroup, addUserToGroup, getGroupsByUserId, getGroupMember, getGroupMemberTransaction, getGroupMembers, addGroupMember, getGroupDetailsByGroupId, hasUserExpensesInGroup, removeGroupMember };
+const getGroupBalances = async (groupId) => {
+    const query = `
+        SELECT
+            gm.user_id,
+            gm.role,
+            COALESCE(paid_summary.total_paid, 0) AS total_paid,
+            COALESCE(owed_summary.total_owed, 0) AS total_owed,
+            COALESCE(paid_summary.total_paid, 0)
+                - COALESCE(owed_summary.total_owed, 0) AS balance
+        FROM group_members AS gm
+
+        LEFT JOIN (
+            SELECT
+                e.paid_by AS user_id,
+                e.group_id,
+                SUM(e.amount) AS total_paid
+            FROM expenses AS e
+            WHERE e.group_id = ?
+            GROUP BY e.paid_by, e.group_id
+        ) AS paid_summary
+            ON gm.user_id = paid_summary.user_id
+            AND gm.group_id = paid_summary.group_id
+
+        LEFT JOIN (
+            SELECT
+                es.user_id,
+                e.group_id,
+                SUM(es.amount) AS total_owed
+            FROM expense_splits AS es
+            JOIN expenses AS e
+                ON es.expense_id = e.id
+            WHERE e.group_id = ?
+            GROUP BY es.user_id, e.group_id
+        ) AS owed_summary
+            ON gm.user_id = owed_summary.user_id
+            AND gm.group_id = owed_summary.group_id
+
+        WHERE gm.group_id = ?
+    `;
+
+    const [result] = await pool.execute(query, [
+        groupId,
+        groupId,
+        groupId
+    ]);
+
+    return result;
+};
+
+export { createGroup, addUserToGroup, getGroupsByUserId, getGroupMember, getGroupMemberTransaction, getGroupMembers, addGroupMember, getGroupDetailsByGroupId, hasUserExpensesInGroup, removeGroupMember, getGroupBalances };

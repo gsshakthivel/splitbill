@@ -1,7 +1,8 @@
 import pool from "../config/db.js";
 import { createGroup as createGroupRepository, addUserToGroup, getGroupsByUserId as getGroupsByUserIdRepository,
      getGroupMember, addGroupMember as addGroupMemberRepository, getGroupDetailsByGroupId as getGroupDetailsByGroupIdRepository, 
-     hasUserExpensesInGroup, removeGroupMember as removeGroupMemberRepository } from "../repositories/group.repository.js";
+     hasUserExpensesInGroup, removeGroupMember as removeGroupMemberRepository,
+     getGroupBalances as getGroupBalancesRepository } from "../repositories/group.repository.js";
 import { findUserById } from "../repositories/user.repository.js";
 import AppError from "../utils/errors.js";
 
@@ -87,4 +88,17 @@ const removeGroupMemberService = async (groupId, targetUserId, currentUserId) =>
     return { message: "Group member removed successfully" };
 }
 
-export { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, removeGroupMemberService };
+const getGroupBalancesService = async (groupId, currentUserId) => {
+    const currentUserMembership = await getGroupMember(groupId, currentUserId);
+    if (currentUserMembership.length === 0) {
+        throw new AppError("User not permitted to view group balances", 403);
+    }
+    const groupBalances = await getGroupBalancesRepository(groupId);
+    const balanceResult = groupBalances.map(balance => ({
+        userId: balance.user_id,
+        balance: balance.balance
+    }));
+    return balanceResult;
+}
+
+export { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, removeGroupMemberService, getGroupBalancesService };

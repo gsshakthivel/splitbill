@@ -1,4 +1,5 @@
-import { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, removeGroupMemberService } from "../services/group.service.js";
+import { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, removeGroupMemberService, getGroupBalancesService } from "../services/group.service.js";
+import AppError from "../utils/errors.js";
 
 const createGroup = async (req, res) => {
     const { name } = req.body;
@@ -35,4 +36,18 @@ const removeGroupMember = async (req, res) => {
     res.status(200).json(result);
 }
 
-export { createGroup, getGroups, addGroupMember, getGroupDetails, removeGroupMember };
+const getGroupBalances = async (req, res) => {
+    const { groupId } = req.params;
+    const { id } = req.user;
+
+    const groupIdNumber = Number(groupId);
+
+    if (!Number.isInteger(groupIdNumber) || groupIdNumber <= 0) {
+        throw new AppError("Invalid groupId", 400);
+    }
+
+    const result = await getGroupBalancesService(groupIdNumber, id);
+    res.status(200).json({"message": "Group balances fetched successfully", "data": result});
+}
+
+export { createGroup, getGroups, addGroupMember, getGroupDetails, removeGroupMember, getGroupBalances };
