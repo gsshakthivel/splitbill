@@ -7,6 +7,7 @@ import { createGroup as createGroupRepository, addUserToGroup, getGroupsByUserId
 import { findUserById } from "../repositories/user.repository.js";
 import { createNotification as createNotificationRepository, createNotificationRecipient as createNotificationRecipientRepository } from "../repositories/notifications.repository.js";
 import AppError from "../utils/errors.js";
+import sendNotification from "../socket/notification.socket.js";
 
 const createGroupService = async (name, userId) => {
     const connection = await pool.getConnection();
@@ -54,6 +55,15 @@ const addGroupMemberService = async (groupId, targetUserId, currentUserId) => {
         await createNotificationRecipientRepository(connection, notifyTargetUser.id, targetUserId);
         
         await connection.commit();
+
+        sendNotification(targetUserId, {
+            id: notifyTargetUser.id,
+            userId: currentUserId,
+            groupId,
+            type: "member_added",
+            message: `You were added to the group`
+        });
+
         return groupMember;
     } catch (error) {
         if(transactionStarted) {
@@ -121,6 +131,15 @@ const removeGroupMemberService = async (groupId, targetUserId, currentUserId) =>
     await createNotificationRecipientRepository(connection, notifyTargetUser.id, targetUserId);
 
     await connection.commit();
+
+    sendNotification(targetUserId, {
+        id: notifyTargetUser.id,
+        userId: currentUserId,
+        groupId,
+        type: "member_removed",
+        message: `You were removed from the group`
+    });
+
     return { message: "Group member removed successfully" };
     } catch (error) {
         if(transactionStarted) {

@@ -5,6 +5,7 @@ import { getGroupMember, getGroupMemberTransaction } from "../repositories/group
 import { createNotification as createNotificationRepository, createNotificationRecipient as createNotificationRecipientRepository } from "../repositories/notifications.repository.js";
 import { findUserById } from "../repositories/user.repository.js";
 import pool from "../config/db.js";
+import sendNotification from "../socket/notification.socket.js";
 
 const createSettlementService = async (groupId, toUserId, amount, fromUserId) => {
     const connection = await pool.getConnection();
@@ -58,6 +59,16 @@ const createSettlementService = async (groupId, toUserId, amount, fromUserId) =>
     await createNotificationRecipientRepository(connection, notifyUser.id, toUserId);
     
     await connection.commit();
+
+    sendNotification(toUserId, {
+        id: notifyUser.id,
+        userId: fromUserId,
+        groupId,
+        settlementId: settlement.id,
+        type: "settlement_created",
+        message: `${fromUserName} has settled and paid you ₹${amount.toFixed(2)}`
+    });
+
     return settlement;      
     } catch (error) {
         if (transactionStarted) {

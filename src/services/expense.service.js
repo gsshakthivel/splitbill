@@ -7,6 +7,7 @@ import { createExpense as createExpenseRepository, createExpenseSplit as createE
     deleteExpenseSplits as deleteExpenseSplitsRepository, deleteExpense as deleteExpenseRepository,
     getExpenseParticipants as getExpenseParticipantsRepository } from "../repositories/expense.repository.js";
 import { createNotification as createNotificationRepository, createNotificationRecipient as createNotificationRecipientRepository } from "../repositories/notifications.repository.js";
+import sendNotification from "../socket/notification.socket.js";
 
 const createExpenseService = async (groupId, paidBy, amount, description, splitType, createdBy, splits) => {
     
@@ -80,12 +81,30 @@ const createExpenseService = async (groupId, paidBy, amount, description, splitT
         }
 
         const recipients = [...uniqueUserIds].filter(userId => userId !== createdBy);
-        const notification = await createNotificationRepository(connection, groupId, createdBy, "expense_created", `${normalizedDescription} expense of ₹${amount.toFixed(2)} was added to the group`);
-        for (const recipient of recipients) {
-            await createNotificationRecipientRepository(connection, notification.id, recipient);
+        const notificationMessage = `${normalizedDescription} expense of ₹${amount.toFixed(2)} was added to the group`;
+
+        let notification;
+        
+        if (recipients.length > 0) {
+            notification = await createNotificationRepository(connection, groupId, createdBy, "expense_created", notificationMessage);
+            for (const recipient of recipients) {
+                await createNotificationRecipientRepository(connection, notification.id, recipient);
+            }
         }
 
         await connection.commit();
+
+        for (const recipient of recipients) {
+            sendNotification(recipient, {
+                id: notification.id,
+                userId: createdBy,
+                groupId,
+                expenseId: expense.id,
+                type: "expense_created",
+                message: notificationMessage
+            });
+        }
+
         return expense;
     } catch (error) {
         if (transactionStarted) {
@@ -200,6 +219,8 @@ const updateExpenseService = async (groupId, expenseId, userId, description, amo
            
         const normalizedDescription = description.trim();
 
+        const socketNotifications = [];
+
         await connection.beginTransaction();
         transactionStarted = true;
 
@@ -230,26 +251,71 @@ const updateExpenseService = async (groupId, expenseId, userId, description, amo
         const addedRecipients = addedParticipants.filter(id => id !== userId);
         const removedRecipients = removedParticipants.filter(id => id !== userId);
 
+        const addedRecipientsNotificationMessage = `You were added to the ${normalizedDescription} expense of ₹${amount.toFixed(2)}`;
+        const updatedRecipientsNotificationMessage = `${normalizedDescription} expense of ₹${amount.toFixed(2)} was updated in the group`;
+        const removedRecipientsNotificationMessage = `You were removed from the ${normalizedDescription} expense of ₹${amount.toFixed(2)}`;
+        
         if(addedRecipients.length > 0) {
-            const notification = await createNotificationRepository(connection, groupId, userId, "expense_participant_added", `You were added to the ${normalizedDescription} expense of ₹${amount.toFixed(2)}`);
+            const notification = await createNotificationRepository(connection, groupId, userId, "expense_participant_added", addedRecipientsNotificationMessage);
             for (const recipient of addedRecipients) {
                 await createNotificationRecipientRepository(connection, notification.id, recipient);
+
+                socketNotifications.push({
+                    recipient,
+                    notification: {
+                        id: notification.id,
+                        userId,
+                        groupId,
+                        expenseId,
+                        type: "expense_participant_added",
+                        message: addedRecipientsNotificationMessage
+                    }
+                });
             }
         }
         if(updatedRecipients.length > 0) {
-            const notification = await createNotificationRepository(connection, groupId, userId, "expense_updated", `${normalizedDescription} expense of ₹${amount.toFixed(2)} was updated in the group`);
+            const notification = await createNotificationRepository(connection, groupId, userId, "expense_updated", updatedRecipientsNotificationMessage);
             for (const recipient of updatedRecipients) {
                 await createNotificationRecipientRepository(connection, notification.id, recipient);
+
+                socketNotifications.push({
+                    recipient,
+                    notification: {
+                        id: notification.id,
+                        userId,
+                        groupId,
+                        expenseId,
+                        type: "expense_updated",
+                        message: updatedRecipientsNotificationMessage
+                    }
+                });
             }
         }
         if(removedRecipients.length > 0) {
-            const notification = await createNotificationRepository(connection, groupId, userId, "expense_participant_removed", `You were removed from the ${normalizedDescription} expense of ₹${amount.toFixed(2)}`);
+            const notification = await createNotificationRepository(connection, groupId, userId, "expense_participant_removed", removedRecipientsNotificationMessage);
             for (const recipient of removedRecipients) {
                 await createNotificationRecipientRepository(connection, notification.id, recipient);
+
+                socketNotifications.push({
+                    recipient,
+                    notification: {
+                        id: notification.id,
+                        userId,
+                        groupId,
+                        expenseId,
+                        type: "expense_participant_removed",
+                        message: removedRecipientsNotificationMessage
+                    }
+                });
             }
         }
 
         await connection.commit();
+
+        socketNotifications.forEach(({ recipient, notification }) => {
+            sendNotification(recipient, notification);
+        });
+        
         return updatedExpense;
     } catch (error) {
         if (transactionStarted) {
@@ -291,15 +357,33 @@ const deleteExpenseService = async (groupId, expenseId, userId) => {
             throw new AppError("Expense could not be deleted", 500);
         }
 
+        const normalizedDescription = expense[0].description.trim();
+        const message = `${normalizedDescription} expense of ₹${Number(expense[0].amount).toFixed(2)} was deleted from the group`;
+        let notification;
+
         if (notificationRecipients.length > 0) {
-            const normalizedDescription = expense[0].description.trim();
-            const notification = await createNotificationRepository(connection, groupId, userId, "expense_deleted", `${normalizedDescription} expense of ₹${Number(expense[0].amount).toFixed(2)} was deleted from the group`);
+            
+            notification = await createNotificationRepository(connection, groupId, userId, "expense_deleted", message);
             for (const recipient of notificationRecipients) {
                 await createNotificationRecipientRepository(connection, notification.id, recipient);
             }
         }
 
         await connection.commit();
+
+        if (notificationRecipients.length > 0) {
+            for (const recipient of notificationRecipients) {
+                sendNotification(recipient, {
+                    id: notification.id,
+                    userId,
+                    groupId,
+                    expenseId,
+                    type: "expense_deleted",
+                    message
+                });
+            }
+        }
+
         return { expenseId };
     } catch (error) {
         if (transactionStarted) {
