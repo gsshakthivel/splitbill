@@ -1,4 +1,5 @@
 import { verifyToken } from "../utils/jwt.js";
+import logger from "../utils/logger.js";
 
 const initializeSocket = (io) => {
 
@@ -21,15 +22,15 @@ const initializeSocket = (io) => {
     });
 
     io.on("connection", (socket) => {
-        console.log("Client connected:", socket.id);
-        console.log("User ID:", socket.userId);
+        logger.info("Client connected:", socket.id);
+        logger.info("User ID:", socket.userId);
 
         socket.join(`user:${socket.userId}`);
 
-        console.log(`User joined room: user:${socket.userId}`);
+        logger.info(`User joined room: user:${socket.userId}`);
 
         socket.on("disconnect", () => {
-            console.log("Client disconnected:", socket.id);
+            logger.info("Client disconnected:", socket.id);
         });
     });
 };

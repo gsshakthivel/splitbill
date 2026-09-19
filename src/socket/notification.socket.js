@@ -1,10 +1,11 @@
 import { getIO } from "./socket.manager.js";
+import logger from "../utils/logger.js";
 
 const sendNotification = (userId, notification) => {
     
     const io = getIO();
 
-    console.log("Sending notification to:", `user:${userId}`);
+    logger.info("Sending notification to:", `user:${userId}`);
 
     io.to(`user:${userId}`).emit("notification", notification);
 };
