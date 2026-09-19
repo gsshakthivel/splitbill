@@ -8,8 +8,22 @@ import pool from "../config/db.js";
 import sendNotification from "../socket/notification.socket.js";
 
 const createSettlementService = async (groupId, toUserId, amount, fromUserId) => {
+
+    if (!Number.isInteger(groupId) || groupId <= 0) {
+        throw new AppError("Invalid groupId", 400);
+    }
+
+    if (!Number.isInteger(toUserId) || toUserId <= 0) {
+        throw new AppError("Invalid toUserId", 400);
+    }
+
+    if (!Number.isInteger(fromUserId) || fromUserId <= 0) {
+        throw new AppError("Invalid fromUserId", 400);
+    }
+
     const connection = await pool.getConnection();
     let transactionStarted = false;
+    
     try {   
         
     const userIsGroupMember = await getGroupMemberTransaction(connection, groupId, fromUserId);

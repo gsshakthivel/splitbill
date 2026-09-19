@@ -11,14 +11,21 @@ import sendNotification from "../socket/notification.socket.js";
 
 const createGroupService = async (name, userId) => {
     const connection = await pool.getConnection();
+    let transactionStarted = false;
+
     try {
         await connection.beginTransaction();
+        transactionStarted = true;
+
         const group = await createGroupRepository(connection, name, userId);
         await addUserToGroup(connection, group.id, userId, "owner", userId);
         await connection.commit();
+        
         return group;
     } catch (error) {
-        await connection.rollback();
+        if (transactionStarted) {
+            await connection.rollback();
+        }
         throw error;
     } finally {
         connection.release();

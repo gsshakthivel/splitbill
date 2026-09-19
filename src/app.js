@@ -1,4 +1,6 @@
 import express from "express";
+import helmet from "helmet";
+import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
 import groupRoutes from "./routes/group.routes.js";
 import notificationRoutes from "./routes/notifications.routes.js";
@@ -6,7 +8,9 @@ import errorHandler from "./middleware/error.middleware.js";
 
 const app = express();
 
-app.use(express.json());
+app.use(helmet());
+app.use(cors());
+app.use(express.json({ limit: "10kb" }));
 
 app.get("/health", (req, res) => {
     res.status(200).json({

@@ -1,0 +1,41 @@
+services:
+
+  mysql:
+    image: mysql:8.4
+    container_name: splitbill-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: splitbill
+      MYSQL_USER: splitbill_user
+      MYSQL_PASSWORD: splitbill_password
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+  api:
+    build: .
+    container_name: splitbill-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: splitbill_user
+      DB_PASSWORD: splitbill_password
+      DB_NAME: splitbill
+      JWT_SECRET: your_docker_jwt_secret
+      JWT_EXPIRES_IN: 1d
+      PORT: 5000
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

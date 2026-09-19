@@ -11,8 +11,11 @@ import sendNotification from "../socket/notification.socket.js";
 
 const createExpenseService = async (groupId, paidBy, amount, description, splitType, createdBy, splits) => {
     
+        if (!Number.isInteger(paidBy) || paidBy <= 0) {
+            throw new AppError("paidBy must be a positive integer", 400);
+        }
         if (description === null || description === undefined || typeof description !== 'string' || description.trim().length === 0 || description.trim().length > 100 ) {
-            throw new AppError("Description is required and should be less than 100 characters", 400);
+            throw new AppError("Description is required and must be 100 characters or less", 400);
         }
         if (typeof amount !== 'number' || Number.isFinite(amount) === false || amount <= 0 || !Number.isInteger(amount * 100) ) {
             throw new AppError("Amount is required and should be greater than 0", 400);
@@ -63,6 +66,7 @@ const createExpenseService = async (groupId, paidBy, amount, description, splitT
 
         await connection.beginTransaction();
         transactionStarted = true;
+
         const expense = await createExpenseRepository(connection, groupId, paidBy, amount, normalizedDescription, splitType, createdBy);
         if (splitType === "equal") {
             const totalPaise = amount * 100;
