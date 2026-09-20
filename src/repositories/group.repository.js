@@ -68,17 +68,26 @@ const removeGroupMember = async (connection, groupId, userId) => {
 
 const getGroupBalances = async (groupId) => {
     const query = `
-        SELECT
+        SELECT 
             gm.user_id,
             gm.role,
+
             COALESCE(paid_summary.total_paid, 0) AS total_paid,
             COALESCE(owed_summary.total_owed, 0) AS total_owed,
+
+            COALESCE(received_summary.total_received, 0) AS total_received,
+            COALESCE(settlement_paid_summary.total_paid, 0) AS settlement_paid,
+
             COALESCE(paid_summary.total_paid, 0)
-                - COALESCE(owed_summary.total_owed, 0) AS balance
+                - COALESCE(owed_summary.total_owed, 0)
+                - COALESCE(received_summary.total_received, 0)
+                + COALESCE(settlement_paid_summary.total_paid, 0)
+                AS balance
+
         FROM group_members AS gm
 
         LEFT JOIN (
-            SELECT
+            SELECT 
                 e.paid_by AS user_id,
                 e.group_id,
                 SUM(e.amount) AS total_paid
@@ -90,7 +99,7 @@ const getGroupBalances = async (groupId) => {
             AND gm.group_id = paid_summary.group_id
 
         LEFT JOIN (
-            SELECT
+            SELECT 
                 es.user_id,
                 e.group_id,
                 SUM(es.amount) AS total_owed
@@ -103,10 +112,36 @@ const getGroupBalances = async (groupId) => {
             ON gm.user_id = owed_summary.user_id
             AND gm.group_id = owed_summary.group_id
 
+        LEFT JOIN (
+            SELECT
+                s.to_user_id AS user_id,
+                s.group_id,
+                SUM(s.amount) AS total_received
+            FROM settlements AS s
+            WHERE s.group_id = ?
+            GROUP BY s.to_user_id, s.group_id
+        ) AS received_summary
+            ON gm.user_id = received_summary.user_id
+            AND gm.group_id = received_summary.group_id
+
+        LEFT JOIN (
+            SELECT
+                s.from_user_id AS user_id,
+                s.group_id,
+                SUM(s.amount) AS total_paid
+            FROM settlements AS s
+            WHERE s.group_id = ?
+            GROUP BY s.from_user_id, s.group_id
+        ) AS settlement_paid_summary
+            ON gm.user_id = settlement_paid_summary.user_id
+            AND gm.group_id = settlement_paid_summary.group_id
+
         WHERE gm.group_id = ?
     `;
 
     const [result] = await pool.execute(query, [
+        groupId,
+        groupId,
         groupId,
         groupId,
         groupId
