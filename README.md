@@ -279,13 +279,13 @@ users
 
 A user's group balance is calculated using:
 
-Balance = Total Paid - Total Owed
+Balance = Total Paid - Total Owed - Total Received + Settlement Paid
 
 Where:
 
-* **Positive balance** → the user should receive money.
-* **Negative balance** → the user owes money.
-* **Zero balance** → the user's payments and obligations are settled.
+- **Positive balance** → the user should receive money.
+- **Negative balance** → the user owes money.
+- **Zero balance** → the user's payments and obligations are settled.
 
 
 ## Authentication & Security
@@ -451,6 +451,14 @@ GET   /api/v1/notifications/unread-count
 PATCH /api/v1/notifications/:notificationId/read
 
 This allows notifications to remain available even when a user is not connected through Socket.IO.
+
+
+## Production Reliability
+
+- Structured application logging using Pino.
+- Graceful shutdown handling for the HTTP server, Socket.IO, and MySQL connection pool.
+- Environment-based configuration for local and production environments.
+- Centralized error handling for unexpected application errors.
 
 
 ## API Endpoints
@@ -764,6 +772,20 @@ An `.env.example` file is included in the repository as a configuration template
 The actual `.env` file contains environment-specific values and secrets, so it is excluded from Git version control.
 
 
+## Deployment
+
+The backend is deployed using Docker.
+
+- **Application hosting:** Render
+- **Database:** Aiven MySQL
+- **Containerization:** Docker
+- **Production configuration:** Render environment variables
+- **Database connection:** TLS/SSL enabled for the production MySQL connection
+- **Health check:** `/health`
+
+The same codebase is used for local and production environments. Local development uses a `.env` file, while production configuration is provided through the deployment platform.
+
+
 ## Future Improvements
 
 The following features may be considered for future versions of SplitBill:
@@ -772,6 +794,5 @@ The following features may be considered for future versions of SplitBill:
 * Flutter client application integration with the backend API and Socket.IO notifications.
 * Improved API documentation using OpenAPI/Swagger.
 * Automated CI/CD workflows using GitHub Actions.
-* Production deployment with managed database and application hosting.
 * Additional integration and end-to-end tests.
-* Improved observability through structured logging and application monitoring.
+* Application monitoring and centralized log aggregation.
