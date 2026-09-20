@@ -49,6 +49,11 @@ The project is built to demonstrate practical backend development skills, includ
 * **CORS** — Cross-origin request handling
 * **express-rate-limit** — Authentication rate limiting
 
+### API Documentation
+
+* **OpenAPI 3.0** — API specification
+* **Swagger UI** — Interactive API documentation
+
 ### DevOps
 
 * **Docker** — Containerization
@@ -58,6 +63,7 @@ The project is built to demonstrate practical backend development skills, includ
 
 * **Git / GitHub** — Version control and source code hosting
 * **Raw SQL** — Database queries without an ORM
+* **Pino** — Structured application logging
 
 ---
 
@@ -135,9 +141,16 @@ splitbill-backend/
 ├── database/
 │   └── schema.sql
 │
+├── docs/
+│   └── openapi.yaml
+│
+├── certs/                    # Local only; excluded from Git
+│   └── ca.pem               # Aiven CA certificate for TLS
+│
 ├── src/
 │   ├── config/
-│   │   └── db.js
+│   │   ├── db.js
+│   │   └── swagger.js
 │   │
 │   ├── controllers/
 │   │   ├── auth.controller.js
@@ -178,7 +191,8 @@ splitbill-backend/
 │   │
 │   ├── utils/
 │   │   ├── errors.js
-│   │   └── jwt.js
+│   │   ├── jwt.js
+│   │   └── logger.js
 │   │
 │   ├── app.js
 │   └── server.js
@@ -194,6 +208,7 @@ splitbill-backend/
 │   └── socket.test.js
 │
 ├── .dockerignore
+├── .env                    # Local only; excluded from Git
 ├── .env.example
 ├── .gitignore
 ├── docker-compose.yml
@@ -214,8 +229,11 @@ splitbill-backend/
 | `middleware/`   | Authentication and centralized error handling                |
 | `socket/`       | Socket.IO setup and real-time notification delivery          |
 | `utils/`        | Shared utilities such as JWT handling and application errors |
-| `config/`       | Database configuration                                       |
+| `config/`       | Database and Swagger configuration                           |
+| `utils/`        | Shared utilities such as JWT handling, errors, and logging   |
 | `database/`     | Database schema and initialization SQL                       |
+| `docs/`         | OpenAPI API specification                                    |
+| `certs/`        | Local TLS certificates for secure database connections       |
 | `tests/`        | Jest unit tests and Supertest API tests                      |
 
 
@@ -367,6 +385,9 @@ DB_USER=your_mysql_username
 DB_PASSWORD=your_mysql_password
 DB_NAME=splitbill
 
+DB_SSL=false
+DB_SSL_CA=./certs/ca.pem
+
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=1d
 
@@ -455,7 +476,7 @@ This allows notifications to remain available even when a user is not connected 
 
 ## Production Reliability
 
-- Structured application logging using Pino.
+- Structured application logging using Pino with configurable log levels.
 - Graceful shutdown handling for the HTTP server, Socket.IO, and MySQL connection pool.
 - Environment-based configuration for local and production environments.
 - Centralized error handling for unexpected application errors.
@@ -523,6 +544,26 @@ Protected endpoints require a JWT in the request header:
 Authorization: Bearer <token>
 
 
+## API Documentation
+
+SplitBill uses **OpenAPI 3.0** to document the REST API and **Swagger UI** to provide interactive API documentation.
+
+The OpenAPI specification is available at:
+
+docs/openapi.yaml
+
+When running the backend locally, Swagger UI is available at:
+
+http://localhost:5000/api-docs
+
+Swagger UI documents all API operations and can be used to test protected endpoints by providing a JWT through the **Authorize** button.
+
+### OpenAPI / Swagger
+
+- **OpenAPI** defines the API contract, request/response schemas, parameters, and authentication requirements.
+- **Swagger UI** provides an interactive browser interface for exploring and testing the OpenAPI specification.
+
+
 ## Testing
 
 SplitBill uses **Jest** for unit testing and **Supertest** for HTTP/API testing.
@@ -540,6 +581,7 @@ The test suite covers important application behavior including:
 * Socket.IO authentication and connection handling
 * API health check
 * API request validation
+* Swagger UI API interaction and JWT authentication smoke testing
 
 ### Test Structure
 
@@ -614,6 +656,9 @@ DB_USER=your_mysql_username
 DB_PASSWORD=your_mysql_password
 DB_NAME=splitbill
 
+DB_SSL=false
+DB_SSL_CA=./certs/ca.pem
+
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=1d
 
@@ -628,8 +673,13 @@ http://localhost:5000
 
 ### 6. Verify the API
 
-Open:
+Health check:
+
 http://localhost:5000/health
+
+Swagger UI:
+
+http://localhost:5000/api-docs
 
 A successful response should look like:
 
@@ -749,6 +799,9 @@ DB_USER=your_mysql_username
 DB_PASSWORD=your_mysql_password
 DB_NAME=splitbill
 
+DB_SSL=false
+DB_SSL_CA=./certs/ca.pem
+
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=1d
 
@@ -763,6 +816,8 @@ PORT=5000
 | `DB_USER`        | MySQL username                      |
 | `DB_PASSWORD`    | MySQL password                      |
 | `DB_NAME`        | MySQL database name                 |
+| `DB_SSL`         | Enables TLS/SSL for the MySQL connection |
+| `DB_SSL_CA`      | Path to the MySQL CA certificate when SSL is enabled |
 | `JWT_SECRET`     | Secret used to sign and verify JWTs |
 | `JWT_EXPIRES_IN` | JWT expiration duration             |
 | `PORT`           | Port on which the API server runs   |
@@ -770,6 +825,8 @@ PORT=5000
 An `.env.example` file is included in the repository as a configuration template.
 
 The actual `.env` file contains environment-specific values and secrets, so it is excluded from Git version control.
+
+The Aiven CA certificate is stored locally at `certs/ca.pem` when SSL is enabled. The `certs/` directory is excluded from Git because the certificate is environment-specific.
 
 
 ## Deployment
@@ -782,8 +839,13 @@ The backend is deployed using Docker.
 - **Production configuration:** Render environment variables
 - **Database connection:** TLS/SSL enabled for the production MySQL connection
 - **Health check:** `/health`
+- **Production database TLS:** Enabled using the Aiven CA certificate
+- **Production environment variables:** Configured in Render
+- **Production API:** `https://splitbill-7uls.onrender.com`
 
-The same codebase is used for local and production environments. Local development uses a `.env` file, while production configuration is provided through the deployment platform.
+The same codebase is used for local and production environments. Local development uses a `.env` file, while production configuration is provided through Render environment variables.
+
+Local development can use `DB_SSL=false` with a local MySQL instance. Production uses `DB_SSL=true` and the Aiven CA certificate for the MySQL TLS connection.
 
 
 ## Future Improvements
@@ -792,7 +854,6 @@ The following features may be considered for future versions of SplitBill:
 
 * Support for additional expense split types such as percentage-based and custom splits.
 * Flutter client application integration with the backend API and Socket.IO notifications.
-* Improved API documentation using OpenAPI/Swagger.
 * Automated CI/CD workflows using GitHub Actions.
 * Additional integration and end-to-end tests.
 * Application monitoring and centralized log aggregation.

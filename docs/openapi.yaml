@@ -62,7 +62,7 @@ components:
       properties:
         message:
           type: string
-          example: Invalid groupId
+          example: An error occurred
 
     RegisterRequest:
       type: object
