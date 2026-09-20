@@ -7,6 +7,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY src ./src
+COPY docs ./docs
 
 EXPOSE 5000
 
