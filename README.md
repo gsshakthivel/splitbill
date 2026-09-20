@@ -489,7 +489,7 @@ The SplitBill backend exposes RESTful API endpoints under the `/api/v1` prefix.
 | `POST`   | `/api/v1/groups/:groupId/expenses`            | Create an expense        | JWT  |
 | `GET`    | `/api/v1/groups/:groupId/expenses`            | Get expenses for a group | JWT  |
 | `GET`    | `/api/v1/groups/:groupId/expenses/:expenseId` | Get expense details      | JWT  |
-| `PUT`    | `/api/v1/groups/:groupId/expenses/:expenseId` | Update an expense        | JWT  |
+| `PATCH`  | `/api/v1/groups/:groupId/expenses/:expenseId` | Update an expense        | JWT  |
 | `DELETE` | `/api/v1/groups/:groupId/expenses/:expenseId` | Delete an expense        | JWT  |
 
 ### Balances
