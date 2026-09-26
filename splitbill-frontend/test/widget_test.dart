@@ -5,12 +5,17 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:splitbill_frontend/app/app.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:splitbill_frontend/features/auth/presentation/screens/login_screen.dart';
 
 void main() {
-  testWidgets('Login screen loads', (WidgetTester tester) async {
-    await tester.pumpWidget(const SplitBillApp());
+  testWidgets('Login screen loads', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: LoginScreen())),
+    );
 
     expect(find.text('Login'), findsOneWidget);
   });
