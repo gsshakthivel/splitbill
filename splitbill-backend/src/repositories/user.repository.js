@@ -26,7 +26,7 @@ const createUser = async (name, email, passwordHash) => {
 
 const findUserById = async (userId) => {
     
-        const query = `SELECT * FROM users WHERE id = ?`;
+        const query = `SELECT id, name, email FROM users WHERE id = ?`;
         const [rows] = await pool.execute(query, [userId]);
         
         if (rows.length > 0) {
