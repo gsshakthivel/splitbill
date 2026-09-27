@@ -1,5 +1,6 @@
 import 'package:splitbill_frontend/app/core/network/api_client.dart';
 import 'package:splitbill_frontend/features/auth/data/models/auth_response.dart';
+import 'package:splitbill_frontend/features/auth/data/models/user.dart';
 
 class AuthRepository {
   AuthRepository(this._apiClient);
@@ -17,5 +18,13 @@ class AuthRepository {
     );
 
     return AuthResponse.fromJson(response.data!);
+  }
+
+  Future<User> getProfile() async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/auth/profile',
+    );
+
+    return User.fromJson(response.data!);
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbill_frontend/app/core/network/api_client.dart';
 import 'package:splitbill_frontend/app/core/storage/secure_storage_service.dart';
-import 'package:splitbill_frontend/features/auth/data/models/auth_response.dart';
+import 'package:splitbill_frontend/features/auth/data/models/user.dart';
 
 import '../notifiers/auth_notifier.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -22,6 +22,6 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(apiClient);
 });
 
-final authNotifierProvider = AsyncNotifierProvider<AuthNotifier, AuthResponse?>(
+final authNotifierProvider = AsyncNotifierProvider<AuthNotifier, User?>(
   AuthNotifier.new,
 );

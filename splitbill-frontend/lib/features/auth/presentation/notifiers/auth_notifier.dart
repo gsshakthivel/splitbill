@@ -1,22 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:splitbill_frontend/app/core/errors/api_exception.dart';
 
-import '../../data/models/auth_response.dart';
+import '../../data/models/user.dart';
 import '../providers/auth_provider.dart';
 
-class AuthNotifier extends AsyncNotifier<AuthResponse?> {
+class AuthNotifier extends AsyncNotifier<User?> {
   @override
-  Future<AuthResponse?> build() async {
+  Future<User?> build() async {
     final storage = ref.read(secureStorageProvider);
 
     final token = await storage.getToken();
 
-    if (token == null) {
+    if (token == null || token.isEmpty) {
       return null;
     }
 
-    // We have a token, but we don't have the full user yet.
-    // We'll handle token validation/user restoration next.
-    return null;
+    try {
+      final repository = ref.read(authRepositoryProvider);
+
+      return await repository.getProfile();
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) {
+        await storage.deleteToken();
+        return null;
+      }
+
+      rethrow;
+    }
   }
 
   Future<void> login({required String email, required String password}) async {
@@ -30,7 +40,7 @@ class AuthNotifier extends AsyncNotifier<AuthResponse?> {
 
       await storage.saveToken(response.token);
 
-      return response;
+      return User(id: response.id, name: response.name, email: response.email);
     });
   }
 
