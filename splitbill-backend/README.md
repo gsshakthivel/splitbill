@@ -356,6 +356,13 @@ Attach User ID to Request
   ▼
 Controller / Service
 
+### Get Authenticated User Profile
+
+The authenticated user's profile can be retrieved using the JWT returned during login.
+
+GET /api/v1/auth/profile
+Authorization: Bearer <token>
+
 ### Security Measures
 
 * Passwords are hashed using `bcrypt` before being stored in the database.
@@ -488,10 +495,11 @@ The SplitBill backend exposes RESTful API endpoints under the `/api/v1` prefix.
 
 ### Authentication
 
-| Method | Endpoint                | Description                          | Auth |
-| ------ | ----------------------- | ------------------------------------ | ---- |
-| `POST` | `/api/v1/auth/register` | Register a new user                  | No   |
-| `POST` | `/api/v1/auth/login`    | Authenticate a user and return a JWT | No   |
+| Method | Endpoint                | Description                                      | Auth |
+| ------ | ----------------------- | ------------------------------------------------ | ---- |
+| `POST` | `/api/v1/auth/register` | Register a new user                              | No   |
+| `POST` | `/api/v1/auth/login`    | Authenticate a user and return a JWT             | No   |
+| `GET`  | `/api/v1/auth/profile`  | Get the profile of the authenticated user        | JWT  |
 
 ### Groups
 

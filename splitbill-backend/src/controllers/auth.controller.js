@@ -1,5 +1,13 @@
-import { registerUser, loginUser } from "../services/auth.service.js";
+import { getUserById as getUserByIdService, registerUser, loginUser } from "../services/auth.service.js";
 import AppError from "../utils/errors.js";
+
+const getUserProfile = async (req, res) => {
+    const { id } = req.user;
+    
+    const result = await getUserByIdService(id);
+    
+    res.status(200).json(result);
+};
 
 const register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -33,4 +41,4 @@ const login = async (req, res) => {
     res.status(200).json(result);
 };
 
-export { register, login };
+export { getUserProfile, register, login };

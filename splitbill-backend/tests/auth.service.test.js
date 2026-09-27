@@ -8,6 +8,7 @@ jest.unstable_mockModule("bcrypt", () => ({
 }));
 
 jest.unstable_mockModule("../src/repositories/user.repository.js", () => ({
+    findUserById: jest.fn(),
     findUserByEmail: jest.fn(),
     createUser: jest.fn()
 })); 
@@ -16,15 +17,46 @@ jest.unstable_mockModule("../src/utils/jwt.js", () => ({
     generateToken: jest.fn()
 }));
 
-const { registerUser, loginUser } = await import("../src/services/auth.service.js");
+const { getUserById, registerUser, loginUser } = await import("../src/services/auth.service.js");
 
 beforeEach(() => {
     jest.clearAllMocks();
 });
 
-const { findUserByEmail, createUser } = await import("../src/repositories/user.repository.js");
+const { findUserById, findUserByEmail, createUser } = await import("../src/repositories/user.repository.js");
 const { default: bcrypt } = await import("bcrypt");
 const { generateToken } = await import("../src/utils/jwt.js");
+
+test("getUserById should return the user profile", async () => {
+    findUserById.mockResolvedValue({
+        id: 1,
+        name: "Shakthivel",
+        email: "test@example.com"
+    });
+
+    const result = await getUserById(1);
+
+    expect(result).toEqual({
+        id: 1,
+        name: "Shakthivel",
+        email: "test@example.com"
+    });
+
+    expect(findUserById).toHaveBeenCalledWith(1);
+});
+
+test("getUserById should reject when user does not exist", async () => {
+    findUserById.mockResolvedValue(null);
+
+    await expect(
+        getUserById(1)
+    ).rejects.toMatchObject({
+        statusCode: 404,
+        message: "User not found"
+    });
+
+    expect(findUserById).toHaveBeenCalledWith(1);
+});
 
 test("registerUser should create a new user", async () => {
     findUserByEmail.mockResolvedValue(null);

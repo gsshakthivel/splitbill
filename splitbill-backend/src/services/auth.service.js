@@ -1,7 +1,17 @@
-import { findUserByEmail, createUser } from "../repositories/user.repository.js";
+import { findUserByEmail, createUser, findUserById } from "../repositories/user.repository.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/jwt.js";
 import AppError from "../utils/errors.js";
+
+const getUserById = async (id) => {
+    const user = await findUserById(id);
+
+    if (user === null) {
+        throw new AppError("User not found", 404);
+    }
+    
+    return user;
+};
 
 const registerUser = async (name, email, password) => {
     const existingUser = await findUserByEmail(email);
@@ -41,4 +51,4 @@ const loginUser = async (email, password) => {
     };
 };
 
-export { registerUser, loginUser };
+export { getUserById, registerUser, loginUser };
