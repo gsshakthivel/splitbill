@@ -52,8 +52,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(labelText: 'Email'),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
+                  final email = value?.trim();
+
+                  if (email == null || email.isEmpty) {
                     return 'Email is required';
+                  }
+
+                  final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+                  if (!emailRegex.hasMatch(email)) {
+                    return 'Enter a valid email address';
                   }
 
                   return null;
@@ -67,6 +75,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
+                  }
+
+                  if (value.length < 8) {
+                    return 'Password must be at least 8 characters';
                   }
 
                   return null;
