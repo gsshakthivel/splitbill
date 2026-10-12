@@ -1,4 +1,4 @@
-import { findUserByEmail, createUser, findUserById } from "../repositories/user.repository.js";
+import { findUserByEmail, createUser, findUserById, searchUsers as searchUsersRepository } from "../repositories/user.repository.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/jwt.js";
 import AppError from "../utils/errors.js";
@@ -11,6 +11,20 @@ const getUserById = async (id) => {
     }
     
     return user;
+};
+
+const searchUsers = async (query, currentUserId) => {
+    if (typeof query !== "string" || query.trim().length < 2) {
+        throw new AppError(
+            "Search query must contain at least 2 characters",
+            400
+        );
+    }
+
+    return await searchUsersRepository(
+        query.trim(),
+        currentUserId
+    );
 };
 
 const registerUser = async (name, email, password) => {
@@ -51,4 +65,4 @@ const loginUser = async (email, password) => {
     };
 };
 
-export { getUserById, registerUser, loginUser };
+export { getUserById, searchUsers, registerUser, loginUser };
