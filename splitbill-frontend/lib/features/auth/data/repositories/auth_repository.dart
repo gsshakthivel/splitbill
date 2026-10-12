@@ -20,6 +20,20 @@ class AuthRepository {
     return AuthResponse.fromJson(response.data!);
   }
 
+  Future<User> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      '/auth/register',
+      data: {'name': name, 'email': email, 'password': password},
+      requiresAuth: false,
+    );
+
+    return User.fromJson(response.data!);
+  }
+
   Future<User> getProfile() async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/auth/profile',

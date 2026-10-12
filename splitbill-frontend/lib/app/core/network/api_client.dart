@@ -70,6 +70,33 @@ class ApiClient {
     }
   }
 
+  Future<Response<T>> patch<T>(
+    String path, {
+    Object? data,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      return await _dio.patch<T>(
+        path,
+        data: data,
+        options: Options(extra: {'requiresAuth': requiresAuth}),
+      );
+    } on DioException catch (e) {
+      throw _handleDioException(e);
+    }
+  }
+
+  Future<Response<T>> delete<T>(String path, {bool requiresAuth = true}) async {
+    try {
+      return await _dio.delete<T>(
+        path,
+        options: Options(extra: {'requiresAuth': requiresAuth}),
+      );
+    } on DioException catch (e) {
+      throw _handleDioException(e);
+    }
+  }
+
   ApiException _handleDioException(DioException e) {
     final statusCode = e.response?.statusCode;
 

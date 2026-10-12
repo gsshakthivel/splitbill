@@ -9,7 +9,7 @@ class Group {
     return Group(
       id: json['id'] as int,
       name: json['name'] as String,
-      createdBy: json['created_by'] as int,
+      createdBy: (json['createdBy'] ?? json['created_by']) as int,
     );
   }
 }

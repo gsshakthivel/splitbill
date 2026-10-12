@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:splitbill_frontend/features/auth/presentation/providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -14,6 +15,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  bool _isPasswordHidden = true;
 
   @override
   void dispose() {
@@ -70,8 +73,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: _isPasswordHidden,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordHidden
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordHidden = !_isPasswordHidden;
+                      });
+                    },
+                  ),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
@@ -98,6 +115,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ? const CircularProgressIndicator()
                       : const Text('Login'),
                 ),
+              ),
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () => context.go('/register'),
+                child: const Text("Don't have an account? Register"),
               ),
             ],
           ),

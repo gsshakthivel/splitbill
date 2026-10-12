@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:splitbill_frontend/features/auth/presentation/providers/auth_provider.dart';
 
 import '../providers/home_provider.dart';
@@ -11,11 +12,21 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeNotifierProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('SplitBill'),
         actions: [
+          IconButton(
+            onPressed: () async {
+              final result = await context.push('/create-group');
+              if (result == true) {
+                await ref.read(homeNotifierProvider.notifier).refreshGroups();
+              }
+            },
+            icon: const Icon(Icons.add),
+            tooltip: 'Create Group',
+          ),
+
           IconButton(
             onPressed: () {
               ref.read(authNotifierProvider.notifier).logout();
@@ -67,6 +78,9 @@ class HomeScreen extends ConsumerWidget {
                         child: ListTile(
                           title: Text(group.name),
                           subtitle: Text('Group ID: ${group.id}'),
+                          onTap: () {
+                            context.push('/groups/${group.id}');
+                          },
                         ),
                       );
                     },
