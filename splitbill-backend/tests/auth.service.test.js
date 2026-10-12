@@ -10,7 +10,8 @@ jest.unstable_mockModule("bcrypt", () => ({
 jest.unstable_mockModule("../src/repositories/user.repository.js", () => ({
     findUserById: jest.fn(),
     findUserByEmail: jest.fn(),
-    createUser: jest.fn()
+    createUser: jest.fn(),
+    searchUsers: jest.fn()
 })); 
 
 jest.unstable_mockModule("../src/utils/jwt.js", () => ({
@@ -23,7 +24,7 @@ beforeEach(() => {
     jest.clearAllMocks();
 });
 
-const { findUserById, findUserByEmail, createUser } = await import("../src/repositories/user.repository.js");
+const { findUserById, findUserByEmail, createUser, searchUsers } = await import("../src/repositories/user.repository.js");
 const { default: bcrypt } = await import("bcrypt");
 const { generateToken } = await import("../src/utils/jwt.js");
 
