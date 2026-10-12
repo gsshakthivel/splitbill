@@ -500,6 +500,7 @@ The SplitBill backend exposes RESTful API endpoints under the `/api/v1` prefix.
 | `POST` | `/api/v1/auth/register` | Register a new user                              | No   |
 | `POST` | `/api/v1/auth/login`    | Authenticate a user and return a JWT             | No   |
 | `GET`  | `/api/v1/auth/profile`  | Get the profile of the authenticated user        | JWT  |
+| `GET`  | `/api/v1/auth/users/search?q=sha` | Search users by name or email          | JWT  |
 
 ### Groups
 

@@ -35,5 +35,26 @@ const findUserById = async (userId) => {
         return null;
 }
 
+const searchUsers = async (query, currentUserId) => {
+    const sql = `
+        SELECT id, name, email
+        FROM users
+        WHERE id <> ?
+          AND (name LIKE ? OR email LIKE ?)
+        ORDER BY name ASC
+        LIMIT 20
+    `;
 
-export { findUserByEmail, createUser, findUserById };    
+    const searchTerm = `%${query}%`;
+
+    const [rows] = await pool.execute(sql, [
+        currentUserId,
+        searchTerm,
+        searchTerm
+    ]);
+
+    return rows;
+};
+
+
+export { findUserByEmail, createUser, findUserById, searchUsers };
