@@ -8,6 +8,8 @@ import 'package:splitbill_frontend/features/groups/presentation/screens/create_g
 import 'package:splitbill_frontend/features/groups/presentation/screens/group_details_screen.dart';
 import 'package:splitbill_frontend/features/home/presentation/screens/home_screen.dart';
 import 'package:splitbill_frontend/features/auth/presentation/screens/login_screen.dart';
+import 'package:splitbill_frontend/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:splitbill_frontend/features/notifications/presentation/providers/socket_provider.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -79,8 +81,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 
-  ref.listen(authNotifierProvider, (_, _) {
+  ref.listen(authNotifierProvider, (_, next) {
     router.refresh();
+
+    if (next.value != null) {
+      ref.read(notificationSocketListenerProvider);
+    } else {
+      ref.read(socketServiceProvider).disconnect();
+    }
   });
 
   ref.onDispose(router.dispose);

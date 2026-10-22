@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbill_frontend/app/core/errors/api_exception.dart';
+import 'package:splitbill_frontend/features/notifications/presentation/providers/socket_provider.dart';
 
 import '../../data/models/user.dart';
 import '../providers/auth_provider.dart';
@@ -61,6 +62,8 @@ class AuthNotifier extends AsyncNotifier<User?> {
   }
 
   Future<void> logout() async {
+    ref.read(socketServiceProvider).disconnect();
+
     final storage = ref.read(secureStorageProvider);
 
     await storage.deleteToken();

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:splitbill_frontend/features/auth/presentation/providers/auth_provider.dart';
+import 'package:splitbill_frontend/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:splitbill_frontend/features/notifications/presentation/screens/notification_history_screen.dart';
 
 import '../providers/home_provider.dart';
 
@@ -12,6 +14,8 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeNotifierProvider);
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('SplitBill'),
@@ -26,7 +30,25 @@ class HomeScreen extends ConsumerWidget {
             icon: const Icon(Icons.add),
             tooltip: 'Create Group',
           ),
-
+          IconButton(
+            tooltip: 'Notifications',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const NotificationHistoryScreen(),
+                ),
+              );
+            },
+            icon: unreadCount.when(
+              loading: () => const Icon(Icons.notifications_outlined),
+              error: (_, _) => const Icon(Icons.notifications_outlined),
+              data: (count) => Badge(
+                isLabelVisible: count > 0,
+                label: Text(count > 99 ? '99+' : '$count'),
+                child: const Icon(Icons.notifications_outlined),
+              ),
+            ),
+          ),
           IconButton(
             onPressed: () {
               ref.read(authNotifierProvider.notifier).logout();

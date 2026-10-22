@@ -58,6 +58,15 @@ class _EditExpenseScreenState extends ConsumerState<EditExpenseScreen> {
       next.when(
         data: (_) {
           if (previous?.isLoading == true) {
+            ref.invalidate(
+              expenseDetailsProvider((
+                groupId: widget.groupId,
+                expenseId: widget.expenseId,
+              )),
+            );
+
+            ref.invalidate(groupDetailsProvider(widget.groupId));
+
             Navigator.of(context).pop(true);
           }
         },
