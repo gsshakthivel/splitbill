@@ -12,11 +12,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbill_frontend/features/auth/presentation/screens/login_screen.dart';
 
 void main() {
-  testWidgets('Login screen loads', (tester) async {
+  testWidgets('Login screen loads correctly', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(child: MaterialApp(home: LoginScreen())),
     );
 
-    expect(find.text('Login'), findsOneWidget);
+    expect(find.text('Welcome back!'), findsOneWidget);
+    expect(find.text('Login to your account'), findsOneWidget);
+    expect(find.text('Email address'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNWidgets(2));
   });
 }
