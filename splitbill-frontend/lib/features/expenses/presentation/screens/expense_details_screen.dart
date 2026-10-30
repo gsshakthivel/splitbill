@@ -68,306 +68,649 @@ class ExpenseDetailsScreen extends ConsumerWidget {
             return trimmed.isEmpty ? '?' : trimmed[0].toUpperCase();
           }
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF176B55), Color(0xFF104C3D)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Icon(
-                            Icons.receipt_long_rounded,
-                            color: Colors.white,
-                            size: 25,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'TOTAL EXPENSE',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.6,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '₹${expense.amount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          expense.description,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Created ${_formatDateTime(expense.createdAt)}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 26),
-                  const _SectionHeading(
-                    title: 'Payment information',
-                    subtitle: 'Who paid and how this expense is split',
-                  ),
-                  const SizedBox(height: 12),
-                  _Panel(
-                    child: Column(
-                      children: [
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 5,
-                          ),
-                          leading: CircleAvatar(
-                            backgroundColor: const Color(0xFFE2F3EA),
-                            child: const Icon(
-                              Icons.person_rounded,
-                              color: _primary,
-                            ),
-                          ),
-                          title: const Text(
-                            'Paid by',
-                            style: TextStyle(color: _muted, fontSize: 12),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              memberName(expense.paidBy),
-                              style: const TextStyle(
-                                color: _text,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Divider(height: 1, color: _border),
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 5,
-                          ),
-                          leading: const CircleAvatar(
-                            backgroundColor: Color(0xFFE8ECFF),
-                            child: Icon(
-                              Icons.call_split_rounded,
-                              color: Color(0xFF4E5FBF),
-                            ),
-                          ),
-                          title: const Text(
-                            'Split type',
-                            style: TextStyle(color: _muted, fontSize: 12),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              expense.splitType,
-                              style: const TextStyle(
-                                color: _text,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Divider(height: 1, color: _border),
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 5,
-                          ),
-                          leading: const CircleAvatar(
-                            backgroundColor: Color(0xFFFFEEDB),
-                            child: Icon(
-                              Icons.person_outline_rounded,
-                              color: Color(0xFFB56A1B),
-                            ),
-                          ),
-                          title: const Text(
-                            'Created by',
-                            style: TextStyle(color: _muted, fontSize: 12),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              memberName(expense.createdBy),
-                              style: const TextStyle(
-                                color: _text,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 26),
-                  _SectionHeading(
-                    title: 'Expense split',
-                    subtitle:
-                        '${expense.splits.length} ${expense.splits.length == 1 ? 'participant' : 'participants'} sharing this expense',
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE2F3EA),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'SHARES',
-                        style: TextStyle(
-                          color: _primary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (expense.splits.isEmpty)
-                    const _Panel(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: _EmptySplits(),
-                      ),
-                    )
-                  else
-                    _Panel(
+          return Scrollbar(
+            thumbVisibility: true,
+            trackVisibility: true,
+            interactive: true,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          for (var i = 0; i < expense.splits.length; i++) ...[
-                            if (i > 0)
-                              const Divider(
-                                height: 1,
-                                color: _border,
-                                indent: 16,
-                                endIndent: 16,
+                          // Total expense card
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF176B55), Color(0xFF104C3D)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                            Builder(
-                              builder: (context) {
-                                final split = expense.splits[i];
-                                final name = memberName(split.userId);
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: const Icon(
+                                    Icons.receipt_long_rounded,
+                                    color: Colors.white,
+                                    size: 25,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'TOTAL EXPENSE',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '₹${expense.amount.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  expense.description,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Created ${_formatDateTime(expense.createdAt)}',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
 
-                                return ListTile(
+                          const SizedBox(height: 26),
+
+                          // Payment information
+                          const _SectionHeading(
+                            title: 'Payment information',
+                            subtitle: 'Who paid and how this expense is split',
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          _Panel(
+                            child: Column(
+                              children: [
+                                ListTile(
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 5,
                                   ),
-                                  leading: CircleAvatar(
-                                    backgroundColor: const Color(0xFFEAF0ED),
-                                    child: Text(
-                                      initials(name),
-                                      style: const TextStyle(
-                                        color: _primary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                  title: Text(
-                                    name,
-                                    style: const TextStyle(
-                                      color: _text,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  subtitle: const Padding(
-                                    padding: EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      'Share of expense',
-                                      style: TextStyle(
-                                        color: _muted,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  trailing: Text(
-                                    '₹${split.amount.toStringAsFixed(2)}',
-                                    style: const TextStyle(
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Color(0xFFE2F3EA),
+                                    child: Icon(
+                                      Icons.person_rounded,
                                       color: _primary,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                );
-                              },
+                                  title: const Text(
+                                    'Paid by',
+                                    style: TextStyle(
+                                      color: _muted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      memberName(expense.paidBy),
+                                      style: const TextStyle(
+                                        color: _text,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const Divider(height: 1, color: _border),
+                                ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 5,
+                                  ),
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Color(0xFFE8ECFF),
+                                    child: Icon(
+                                      Icons.call_split_rounded,
+                                      color: Color(0xFF4E5FBF),
+                                    ),
+                                  ),
+                                  title: const Text(
+                                    'Split type',
+                                    style: TextStyle(
+                                      color: _muted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      expense.splitType,
+                                      style: const TextStyle(
+                                        color: _text,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const Divider(height: 1, color: _border),
+                                ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 5,
+                                  ),
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Color(0xFFFFEEDB),
+                                    child: Icon(
+                                      Icons.person_outline_rounded,
+                                      color: Color(0xFFB56A1B),
+                                    ),
+                                  ),
+                                  title: const Text(
+                                    'Created by',
+                                    style: TextStyle(
+                                      color: _muted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      memberName(expense.createdBy),
+                                      style: const TextStyle(
+                                        color: _text,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
+
+                          const SizedBox(height: 26),
+
+                          // Expense split
+                          _SectionHeading(
+                            title: 'Expense split',
+                            subtitle:
+                                '${expense.splits.length} ${expense.splits.length == 1 ? 'participant' : 'participants'} sharing this expense',
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE2F3EA),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                'SHARES',
+                                style: TextStyle(
+                                  color: _primary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          if (expense.splits.isEmpty)
+                            const _Panel(
+                              child: Padding(
+                                padding: EdgeInsets.all(24),
+                                child: _EmptySplits(),
+                              ),
+                            )
+                          else
+                            _Panel(
+                              child: Column(
+                                children: [
+                                  for (
+                                    var i = 0;
+                                    i < expense.splits.length;
+                                    i++
+                                  ) ...[
+                                    if (i > 0)
+                                      const Divider(
+                                        height: 1,
+                                        color: _border,
+                                        indent: 16,
+                                        endIndent: 16,
+                                      ),
+                                    Builder(
+                                      builder: (context) {
+                                        final split = expense.splits[i];
+                                        final name = memberName(split.userId);
+
+                                        return ListTile(
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical: 5,
+                                              ),
+                                          leading: CircleAvatar(
+                                            backgroundColor: const Color(
+                                              0xFFEAF0ED,
+                                            ),
+                                            child: Text(
+                                              initials(name),
+                                              style: const TextStyle(
+                                                color: _primary,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                          title: Text(
+                                            name,
+                                            style: const TextStyle(
+                                              color: _text,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          subtitle: const Padding(
+                                            padding: EdgeInsets.only(top: 4),
+                                            child: Text(
+                                              'Share of expense',
+                                              style: TextStyle(
+                                                color: _muted,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          trailing: Text(
+                                            '₹${split.amount.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              color: _primary,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+
+                          const SizedBox(height: 16),
+
+                          // Information message
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEAF3EF),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  color: _primary,
+                                  size: 21,
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Each participant’s amount above represents their recorded share of this expense.',
+                                    style: TextStyle(
+                                      color: _text,
+                                      fontSize: 13,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF3EF),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          color: _primary,
-                          size: 21,
-                        ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Each participant’s amount above represents their recorded share of this expense.',
-                            style: TextStyle(
-                              color: _text,
-                              fontSize: 13,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
+          //   return Center(
+          //     child: ConstrainedBox(
+          //       constraints: const BoxConstraints(maxWidth: 760),
+          //       child: ListView(
+          //         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          //         children: [
+          //           Container(
+          //             padding: const EdgeInsets.all(24),
+          //             decoration: BoxDecoration(
+          //               gradient: const LinearGradient(
+          //                 colors: [Color(0xFF176B55), Color(0xFF104C3D)],
+          //                 begin: Alignment.topLeft,
+          //                 end: Alignment.bottomRight,
+          //               ),
+          //               borderRadius: BorderRadius.circular(24),
+          //             ),
+          //             child: Column(
+          //               crossAxisAlignment: CrossAxisAlignment.start,
+          //               children: [
+          //                 Container(
+          //                   width: 48,
+          //                   height: 48,
+          //                   decoration: BoxDecoration(
+          //                     color: Colors.white.withValues(alpha: 0.15),
+          //                     borderRadius: BorderRadius.circular(15),
+          //                   ),
+          //                   child: const Icon(
+          //                     Icons.receipt_long_rounded,
+          //                     color: Colors.white,
+          //                     size: 25,
+          //                   ),
+          //                 ),
+          //                 const SizedBox(height: 20),
+          //                 const Text(
+          //                   'TOTAL EXPENSE',
+          //                   style: TextStyle(
+          //                     color: Colors.white70,
+          //                     fontSize: 11,
+          //                     fontWeight: FontWeight.w800,
+          //                     letterSpacing: 1.6,
+          //                   ),
+          //                 ),
+          //                 const SizedBox(height: 8),
+          //                 Text(
+          //                   '₹${expense.amount.toStringAsFixed(2)}',
+          //                   style: const TextStyle(
+          //                     color: Colors.white,
+          //                     fontSize: 36,
+          //                     fontWeight: FontWeight.w800,
+          //                     letterSpacing: -1,
+          //                   ),
+          //                 ),
+          //                 const SizedBox(height: 10),
+          //                 Text(
+          //                   expense.description,
+          //                   style: const TextStyle(
+          //                     color: Colors.white,
+          //                     fontSize: 17,
+          //                     fontWeight: FontWeight.w600,
+          //                   ),
+          //                 ),
+          //                 const SizedBox(height: 8),
+          //                 Text(
+          //                   'Created ${_formatDateTime(expense.createdAt)}',
+          //                   style: const TextStyle(
+          //                     color: Colors.white70,
+          //                     fontSize: 12,
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //           const SizedBox(height: 26),
+          //           const _SectionHeading(
+          //             title: 'Payment information',
+          //             subtitle: 'Who paid and how this expense is split',
+          //           ),
+          //           const SizedBox(height: 12),
+          //           _Panel(
+          //             child: Column(
+          //               children: [
+          //                 ListTile(
+          //                   contentPadding: const EdgeInsets.symmetric(
+          //                     horizontal: 16,
+          //                     vertical: 5,
+          //                   ),
+          //                   leading: CircleAvatar(
+          //                     backgroundColor: const Color(0xFFE2F3EA),
+          //                     child: const Icon(
+          //                       Icons.person_rounded,
+          //                       color: _primary,
+          //                     ),
+          //                   ),
+          //                   title: const Text(
+          //                     'Paid by',
+          //                     style: TextStyle(color: _muted, fontSize: 12),
+          //                   ),
+          //                   subtitle: Padding(
+          //                     padding: const EdgeInsets.only(top: 4),
+          //                     child: Text(
+          //                       memberName(expense.paidBy),
+          //                       style: const TextStyle(
+          //                         color: _text,
+          //                         fontWeight: FontWeight.w700,
+          //                         fontSize: 15,
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ),
+          //                 const Divider(height: 1, color: _border),
+          //                 ListTile(
+          //                   contentPadding: const EdgeInsets.symmetric(
+          //                     horizontal: 16,
+          //                     vertical: 5,
+          //                   ),
+          //                   leading: const CircleAvatar(
+          //                     backgroundColor: Color(0xFFE8ECFF),
+          //                     child: Icon(
+          //                       Icons.call_split_rounded,
+          //                       color: Color(0xFF4E5FBF),
+          //                     ),
+          //                   ),
+          //                   title: const Text(
+          //                     'Split type',
+          //                     style: TextStyle(color: _muted, fontSize: 12),
+          //                   ),
+          //                   subtitle: Padding(
+          //                     padding: const EdgeInsets.only(top: 4),
+          //                     child: Text(
+          //                       expense.splitType,
+          //                       style: const TextStyle(
+          //                         color: _text,
+          //                         fontWeight: FontWeight.w700,
+          //                         fontSize: 15,
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ),
+          //                 const Divider(height: 1, color: _border),
+          //                 ListTile(
+          //                   contentPadding: const EdgeInsets.symmetric(
+          //                     horizontal: 16,
+          //                     vertical: 5,
+          //                   ),
+          //                   leading: const CircleAvatar(
+          //                     backgroundColor: Color(0xFFFFEEDB),
+          //                     child: Icon(
+          //                       Icons.person_outline_rounded,
+          //                       color: Color(0xFFB56A1B),
+          //                     ),
+          //                   ),
+          //                   title: const Text(
+          //                     'Created by',
+          //                     style: TextStyle(color: _muted, fontSize: 12),
+          //                   ),
+          //                   subtitle: Padding(
+          //                     padding: const EdgeInsets.only(top: 4),
+          //                     child: Text(
+          //                       memberName(expense.createdBy),
+          //                       style: const TextStyle(
+          //                         color: _text,
+          //                         fontWeight: FontWeight.w700,
+          //                         fontSize: 15,
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //         const SizedBox(height: 26),
+          //         _SectionHeading(
+          //           title: 'Expense split',
+          //           subtitle:
+          //               '${expense.splits.length} ${expense.splits.length == 1 ? 'participant' : 'participants'} sharing this expense',
+          //           trailing: Container(
+          //             padding: const EdgeInsets.symmetric(
+          //               horizontal: 11,
+          //               vertical: 6,
+          //             ),
+          //             decoration: BoxDecoration(
+          //               color: const Color(0xFFE2F3EA),
+          //               borderRadius: BorderRadius.circular(20),
+          //             ),
+          //             child: const Text(
+          //               'SHARES',
+          //               style: TextStyle(
+          //                 color: _primary,
+          //                 fontSize: 10,
+          //                 fontWeight: FontWeight.w800,
+          //                 letterSpacing: 1,
+          //               ),
+          //             ),
+          //           ),
+          //         ),
+          //         const SizedBox(height: 12),
+          //         if (expense.splits.isEmpty)
+          //           const _Panel(
+          //             child: Padding(
+          //               padding: EdgeInsets.all(24),
+          //               child: _EmptySplits(),
+          //             ),
+          //           )
+          //         else
+          //           _Panel(
+          //             child: Column(
+          //               children: [
+          //                 for (var i = 0; i < expense.splits.length; i++) ...[
+          //                   if (i > 0)
+          //                     const Divider(
+          //                       height: 1,
+          //                       color: _border,
+          //                       indent: 16,
+          //                       endIndent: 16,
+          //                     ),
+          //                   Builder(
+          //                     builder: (context) {
+          //                       final split = expense.splits[i];
+          //                       final name = memberName(split.userId);
+
+          //                       return ListTile(
+          //                         contentPadding: const EdgeInsets.symmetric(
+          //                           horizontal: 16,
+          //                           vertical: 5,
+          //                         ),
+          //                         leading: CircleAvatar(
+          //                           backgroundColor: const Color(0xFFEAF0ED),
+          //                           child: Text(
+          //                             initials(name),
+          //                             style: const TextStyle(
+          //                               color: _primary,
+          //                               fontWeight: FontWeight.w800,
+          //                             ),
+          //                           ),
+          //                         ),
+          //                         title: Text(
+          //                           name,
+          //                           style: const TextStyle(
+          //                             color: _text,
+          //                             fontWeight: FontWeight.w700,
+          //                           ),
+          //                         ),
+          //                         subtitle: const Padding(
+          //                           padding: EdgeInsets.only(top: 4),
+          //                           child: Text(
+          //                             'Share of expense',
+          //                             style: TextStyle(
+          //                               color: _muted,
+          //                               fontSize: 12,
+          //                             ),
+          //                           ),
+          //                         ),
+          //                         trailing: Text(
+          //                           '₹${split.amount.toStringAsFixed(2)}',
+          //                           style: const TextStyle(
+          //                             color: _primary,
+          //                             fontSize: 15,
+          //                             fontWeight: FontWeight.w800,
+          //                           ),
+          //                         ),
+          //                       );
+          //                     },
+          //                   ),
+          //                 ],
+          //               ],
+          //             ),
+          //           ),
+          //         const SizedBox(height: 16),
+          //         Container(
+          //           padding: const EdgeInsets.all(16),
+          //           decoration: BoxDecoration(
+          //             color: const Color(0xFFEAF3EF),
+          //             borderRadius: BorderRadius.circular(16),
+          //           ),
+          //           child: const Row(
+          //             crossAxisAlignment: CrossAxisAlignment.start,
+          //             children: [
+          //               Icon(
+          //                 Icons.info_outline_rounded,
+          //                 color: _primary,
+          //                 size: 21,
+          //               ),
+          //               SizedBox(width: 10),
+          //               Expanded(
+          //                 child: Text(
+          //                   'Each participant’s amount above represents their recorded share of this expense.',
+          //                   style: TextStyle(
+          //                     color: _text,
+          //                     fontSize: 13,
+          //                     height: 1.5,
+          //                   ),
+          //                 ),
+          //               ),
+          //             ],
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // );
         },
       ),
     );

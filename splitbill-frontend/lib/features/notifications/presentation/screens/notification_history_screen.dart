@@ -97,149 +97,176 @@ class NotificationHistoryScreen extends ConsumerWidget {
               unreadState.asData?.value ??
               notifications.where((item) => !item.isRead).length;
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: RefreshIndicator(
-                color: _primary,
-                onRefresh: refreshNotifications,
-                child: notifications.isEmpty
-                    ? const _EmptyNotifications()
-                    : ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(22),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF176B55), Color(0xFF27876B)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Row(
+          return Scrollbar(
+            thumbVisibility: true,
+            trackVisibility: true,
+            interactive: true,
+            child: RefreshIndicator(
+              color: _primary,
+              onRefresh: refreshNotifications,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 760),
+                      child: notifications.isEmpty
+                          ? const _EmptyNotifications()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(13),
+                                  padding: const EdgeInsets.all(22),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(16),
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF176B55),
+                                        Color(0xFF27876B),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(24),
                                   ),
-                                  child: const Icon(
-                                    Icons.notifications_active_outlined,
-                                    color: Colors.white,
-                                    size: 28,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      const Text(
-                                        'Stay up to date',
-                                        style: TextStyle(
+                                      Container(
+                                        padding: const EdgeInsets.all(13),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.notifications_active_outlined,
                                           color: Colors.white,
-                                          fontSize: 19,
-                                          fontWeight: FontWeight.w700,
+                                          size: 28,
                                         ),
                                       ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        unreadCount == 0
-                                            ? 'You are all caught up.'
-                                            : 'You have $unreadCount unread ${unreadCount == 1 ? 'notification' : 'notifications'}.',
-                                        style: const TextStyle(
-                                          color: Color(0xFFD9EEE6),
-                                          fontSize: 13,
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Stay up to date',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 19,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              unreadCount == 0
+                                                  ? 'You are all caught up.'
+                                                  : 'You have $unreadCount unread ${unreadCount == 1 ? 'notification' : 'notifications'}.',
+                                              style: const TextStyle(
+                                                color: Color(0xFFD9EEE6),
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
+                                      if (unreadCount > 0)
+                                        Container(
+                                          constraints: const BoxConstraints(
+                                            minWidth: 34,
+                                            minHeight: 34,
+                                          ),
+                                          alignment: Alignment.center,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 9,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            unreadCount > 99
+                                                ? '99+'
+                                                : '$unreadCount',
+                                            style: const TextStyle(
+                                              color: _primary,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),
-                                if (unreadCount > 0)
-                                  Container(
-                                    constraints: const BoxConstraints(
-                                      minWidth: 34,
-                                      minHeight: 34,
-                                    ),
-                                    alignment: Alignment.center,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 9,
-                                      vertical: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: Text(
-                                      unreadCount > 99 ? '99+' : '$unreadCount',
-                                      style: const TextStyle(
-                                        color: _primary,
-                                        fontWeight: FontWeight.w800,
+                                const SizedBox(height: 26),
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Text(
+                                        'Recent activity',
+                                        style: TextStyle(
+                                          color: _text,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                     ),
+                                    Text(
+                                      '${notifications.length} total',
+                                      style: const TextStyle(
+                                        color: _muted,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                ...notifications.map(
+                                  (notification) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _NotificationCard(
+                                      notification: notification,
+                                      onTap: () async {
+                                        if (notification.isRead) return;
+
+                                        try {
+                                          await ref
+                                              .read(
+                                                notificationRepositoryProvider,
+                                              )
+                                              .markAsRead(notification.id);
+
+                                          ref.invalidate(notificationsProvider);
+                                          ref.invalidate(
+                                            unreadNotificationCountProvider,
+                                          );
+                                        } catch (error) {
+                                          if (!context.mounted) return;
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(error.toString()),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
                                   ),
+                                ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 26),
-                          Row(
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  'Recent activity',
-                                  style: TextStyle(
-                                    color: _text,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '${notifications.length} total',
-                                style: const TextStyle(
-                                  color: _muted,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          ...notifications.map(
-                            (notification) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _NotificationCard(
-                                notification: notification,
-                                onTap: () async {
-                                  if (notification.isRead) return;
-
-                                  try {
-                                    await ref
-                                        .read(notificationRepositoryProvider)
-                                        .markAsRead(notification.id);
-
-                                    ref.invalidate(notificationsProvider);
-                                    ref.invalidate(
-                                      unreadNotificationCountProvider,
-                                    );
-                                  } catch (error) {
-                                    if (!context.mounted) return;
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(error.toString())),
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );

@@ -76,4 +76,20 @@ class GroupRepository {
   Future<void> removeMember({required int groupId, required int userId}) async {
     await _apiClient.delete('/groups/$groupId/members/$userId');
   }
+
+  Future<Group> updateGroup({
+    required int groupId,
+    required String name,
+  }) async {
+    final response = await _apiClient.put<Map<String, dynamic>>(
+      '/groups/$groupId',
+      data: {'name': name},
+    );
+
+    return Group.fromJson(response.data!['data'] as Map<String, dynamic>);
+  }
+
+  Future<void> deleteGroup({required int groupId}) async {
+    await _apiClient.delete('/groups/$groupId');
+  }
 }

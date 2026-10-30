@@ -8,6 +8,7 @@ class ApiClient {
     : _dio = Dio(
         BaseOptions(
           baseUrl: 'https://splitbill-7uls.onrender.com/api/v1',
+          // baseUrl: 'http://localhost:5000/api/v1',
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
           headers: {'Content-Type': 'application/json'},
@@ -77,6 +78,22 @@ class ApiClient {
   }) async {
     try {
       return await _dio.patch<T>(
+        path,
+        data: data,
+        options: Options(extra: {'requiresAuth': requiresAuth}),
+      );
+    } on DioException catch (e) {
+      throw _handleDioException(e);
+    }
+  }
+
+  Future<Response<T>> put<T>(
+    String path, {
+    Object? data,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      return await _dio.put<T>(
         path,
         data: data,
         options: Options(extra: {'requiresAuth': requiresAuth}),

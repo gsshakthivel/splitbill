@@ -9,6 +9,7 @@ import 'package:splitbill_frontend/features/expenses/presentation/screens/edit_e
 import 'package:splitbill_frontend/features/groups/presentation/notifiers/group_notifier.dart';
 import 'package:splitbill_frontend/features/groups/presentation/providers/group_provider.dart';
 import 'package:splitbill_frontend/features/groups/presentation/screens/add_member_dialog.dart';
+import 'package:splitbill_frontend/features/home/presentation/providers/home_provider.dart';
 import 'package:splitbill_frontend/features/settlements/presentation/providers/settlement_provider.dart';
 import 'package:splitbill_frontend/features/settlements/presentation/screens/settle_up_screen.dart';
 import 'package:splitbill_frontend/features/settlements/presentation/screens/settlement_history_screen.dart';
@@ -390,12 +391,250 @@ class GroupDetailsScreen extends ConsumerWidget {
 
     if (confirmed != true || !context.mounted) return;
 
-    await ref
-        .read(expenseNotifierProvider.notifier)
-        .deleteExpense(groupId, expenseId);
+    final notifier = ref.read(expenseNotifierProvider.notifier);
+
+    await notifier.deleteExpense(groupId, expenseId);
+
+    if (!context.mounted) return;
+
+    final result = ref.read(expenseNotifierProvider);
+
+    if (result.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.error.toString()),
+          backgroundColor: const Color(0xFFB94141),
+        ),
+      );
+
+      return;
+    }
 
     ref.invalidate(expensesProvider(groupId));
     ref.invalidate(groupBalancesProvider(groupId));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Expense deleted successfully'),
+        backgroundColor: Color(0xFF176B55),
+      ),
+    );
+  }
+
+  Future<void> _editGroup(
+    BuildContext context,
+    WidgetRef ref,
+    String currentName,
+  ) async {
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (_) => _EditGroupDialog(currentName: currentName),
+    );
+
+    if (newName == null || !context.mounted) return;
+    if (newName == currentName) return;
+
+    await ref
+        .read(groupNotifierProvider.notifier)
+        .updateGroup(groupId: groupId, name: newName);
+
+    if (!context.mounted) return;
+
+    final result = ref.read(groupNotifierProvider);
+
+    if (result.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.error.toString()),
+          backgroundColor: _danger,
+        ),
+      );
+      return;
+    }
+
+    ref.invalidate(groupDetailsProvider(groupId));
+
+    await ref.read(homeNotifierProvider.notifier).refreshGroups();
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Group name updated successfully.'),
+        backgroundColor: _primary,
+      ),
+    );
+  }
+
+  Future<void> _deleteGroup(
+    BuildContext context,
+    WidgetRef ref,
+    String groupName,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+        title: Column(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFCEAE8),
+                borderRadius: BorderRadius.circular(19),
+              ),
+              child: const Icon(
+                Icons.delete_outline_rounded,
+                color: Color(0xFFB94141),
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Delete group?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF172B25),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text.rich(
+              TextSpan(
+                style: const TextStyle(
+                  color: Color(0xFF75817C),
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                children: [
+                  const TextSpan(text: 'Are you sure you want to delete '),
+                  TextSpan(
+                    text: '"$groupName"',
+                    style: const TextStyle(
+                      overflow: TextOverflow.ellipsis,
+                      color: Color(0xFF172B25),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const TextSpan(text: '?'),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF6F5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF4D6D2)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Color(0xFFB94141),
+                    size: 20,
+                  ),
+                  SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      'This action cannot be undone.',
+                      style: TextStyle(
+                        color: Color(0xFF8F3935),
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF172B25),
+                    side: const BorderSide(color: Color(0xFFE6ECE8)),
+                    minimumSize: const Size(0, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFB94141),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    await ref
+        .read(groupNotifierProvider.notifier)
+        .deleteGroup(groupId: groupId);
+
+    if (!context.mounted) return;
+
+    final result = ref.read(groupNotifierProvider);
+
+    if (result.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.error.toString()),
+          backgroundColor: _danger,
+        ),
+      );
+      return;
+    }
+
+    ref.invalidate(groupDetailsProvider(groupId));
+
+    await ref.read(homeNotifierProvider.notifier).refreshGroups();
+
+    if (!context.mounted) return;
+
+    context.pop();
+
+    // We'll handle refreshing the groups list in a later step.
   }
 
   @override
@@ -412,6 +651,18 @@ class GroupDetailsScreen extends ConsumerWidget {
         title: const Text(
           'Group details',
           style: TextStyle(color: _text, fontWeight: FontWeight.w800),
+        ),
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+          icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Back',
         ),
         actions: [
           IconButton(
@@ -467,171 +718,67 @@ class GroupDetailsScreen extends ConsumerWidget {
           ),
         ),
         data: (group) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 36),
-                children: [
-                  _GroupHeader(
-                    name: group.name,
-                    id: group.id,
-                    memberCount: group.members.length,
-                  ),
-                  const SizedBox(height: 28),
-                  _SectionHeading(
-                    title: 'Members',
-                    subtitle: '${group.members.length} people in this group',
-                    trailing: TextButton.icon(
-                      onPressed: () =>
-                          _showAddMemberDialog(context, ref, groupId),
-                      icon: const Icon(
-                        Icons.person_add_alt_1_rounded,
-                        size: 18,
-                      ),
-                      label: const Text('Add'),
-                      style: TextButton.styleFrom(foregroundColor: _primary),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _Panel(
-                    child: group.members.isEmpty
-                        ? const _EmptyMessage(
-                            icon: Icons.people_outline_rounded,
-                            message: 'No members in this group yet.',
-                          )
-                        : Column(
-                            children: [
-                              for (
-                                var i = 0;
-                                i < group.members.length;
-                                i++
-                              ) ...[
-                                if (i > 0)
-                                  const Divider(height: 1, color: _border),
-                                Builder(
-                                  builder: (context) {
-                                    final member = group.members[i];
-                                    final isCurrentUser =
-                                        member.userId == currentUserId;
+          final isGroupOwner = group.createdBy == currentUserId;
 
-                                    return ListTile(
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 14,
-                                            vertical: 4,
-                                          ),
-                                      leading: CircleAvatar(
-                                        radius: 22,
-                                        backgroundColor: const Color(
-                                          0xFFE2F3EA,
-                                        ),
-                                        child: Text(
-                                          member.username.isNotEmpty
-                                              ? member.username[0].toUpperCase()
-                                              : '?',
-                                          style: const TextStyle(
-                                            color: _primary,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                      title: Text(
-                                        isCurrentUser
-                                            ? '${member.username} (You)'
-                                            : member.username,
-                                        style: const TextStyle(
-                                          color: _text,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      subtitle: Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          member.role,
-                                          style: const TextStyle(
-                                            color: _muted,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                      trailing: IconButton(
-                                        tooltip: 'Remove member',
-                                        onPressed: () =>
-                                            _showRemoveMemberDialog(
-                                              context,
-                                              ref,
-                                              groupId,
-                                              member.userId,
-                                              member.username,
-                                            ),
-                                        icon: const Icon(
-                                          Icons.person_remove_outlined,
-                                          color: _muted,
-                                          size: 21,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ],
-                          ),
-                  ),
-                  const SizedBox(height: 28),
-                  const _SectionHeading(
-                    title: 'Balances',
-                    subtitle: 'See who owes and who gets paid',
-                  ),
-                  const SizedBox(height: 12),
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final balancesState = ref.watch(
-                        groupBalancesProvider(groupId),
-                      );
-
-                      return balancesState.when(
-                        loading: () => const _LoadingPanel(),
-                        error: (error, stackTrace) => _ErrorPanel(
-                          message: error.toString(),
-                          onRetry: () =>
-                              ref.invalidate(groupBalancesProvider(groupId)),
-                        ),
-                        data: (balances) {
-                          if (balances.isEmpty) {
-                            return const _Panel(
-                              child: _EmptyMessage(
-                                icon: Icons.account_balance_wallet_outlined,
-                                message: 'No balances available yet.',
+          return Scrollbar(
+            thumbVisibility: true,
+            trackVisibility: true,
+            interactive: true,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 36),
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _GroupHeader(
+                                name: group.name,
+                                id: group.id,
+                                memberCount: group.members.length,
+                                isGroupOwner: isGroupOwner,
+                                onEdit: () =>
+                                    _editGroup(context, ref, group.name),
+                                onDelete: () =>
+                                    _deleteGroup(context, ref, group.name),
                               ),
-                            );
-                          }
-
-                          final currentUserBalance = balances
-                              .where((b) => b.userId == currentUserId)
-                              .firstOrNull;
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              if (currentUserBalance != null)
-                                _YourBalanceCard(
-                                  balance: currentUserBalance.balance,
-                                  onSettle: currentUserBalance.balance < 0
-                                      ? () => _settleUp(
-                                          context,
-                                          ref,
-                                          group.members,
-                                        )
-                                      : null,
-                                ),
-                              const SizedBox(height: 10),
-                              _Panel(
-                                child: Column(
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 28),
+                        _SectionHeading(
+                          title: 'Members',
+                          subtitle:
+                              '${group.members.length} people in this group',
+                          trailing: TextButton.icon(
+                            onPressed: () =>
+                                _showAddMemberDialog(context, ref, groupId),
+                            icon: const Icon(
+                              Icons.person_add_alt_1_rounded,
+                              size: 18,
+                            ),
+                            label: const Text('Add'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: _primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _Panel(
+                          child: group.members.isEmpty
+                              ? const _EmptyMessage(
+                                  icon: Icons.people_outline_rounded,
+                                  message: 'No members in this group yet.',
+                                )
+                              : Column(
                                   children: [
                                     for (
                                       var i = 0;
-                                      i < balances.length;
+                                      i < group.members.length;
                                       i++
                                     ) ...[
                                       if (i > 0)
@@ -641,76 +788,67 @@ class GroupDetailsScreen extends ConsumerWidget {
                                         ),
                                       Builder(
                                         builder: (context) {
-                                          final balance = balances[i];
-                                          final member = group.members
-                                              .where(
-                                                (m) =>
-                                                    m.userId == balance.userId,
-                                              )
-                                              .firstOrNull;
-
-                                          if (member == null) {
-                                            return const SizedBox.shrink();
-                                          }
-
-                                          final owes = balance.balance < 0;
-                                          final settled = balance.balance == 0;
+                                          final member = group.members[i];
+                                          final isCurrentUser =
+                                              member.userId == currentUserId;
 
                                           return ListTile(
                                             contentPadding:
                                                 const EdgeInsets.symmetric(
-                                                  horizontal: 16,
-                                                  vertical: 3,
+                                                  horizontal: 14,
+                                                  vertical: 4,
                                                 ),
                                             leading: CircleAvatar(
-                                              backgroundColor: settled
-                                                  ? const Color(0xFFF0F2F1)
-                                                  : owes
-                                                  ? const Color(0xFFFFE9E7)
-                                                  : const Color(0xFFE2F3EA),
-                                              child: Icon(
-                                                settled
-                                                    ? Icons.check_rounded
-                                                    : owes
-                                                    ? Icons.arrow_upward_rounded
-                                                    : Icons
-                                                          .arrow_downward_rounded,
-                                                size: 19,
-                                                color: settled
-                                                    ? _muted
-                                                    : owes
-                                                    ? _danger
-                                                    : _primary,
+                                              radius: 22,
+                                              backgroundColor: const Color(
+                                                0xFFE2F3EA,
+                                              ),
+                                              child: Text(
+                                                member.username.isNotEmpty
+                                                    ? member.username[0]
+                                                          .toUpperCase()
+                                                    : '?',
+                                                style: const TextStyle(
+                                                  color: _primary,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
                                               ),
                                             ),
                                             title: Text(
-                                              member.username,
+                                              isCurrentUser
+                                                  ? '${member.username} (You)'
+                                                  : member.username,
                                               style: const TextStyle(
                                                 color: _text,
-                                                fontWeight: FontWeight.w600,
+                                                fontWeight: FontWeight.w700,
                                               ),
                                             ),
-                                            subtitle: Text(
-                                              settled
-                                                  ? 'All settled'
-                                                  : owes
-                                                  ? 'Owes the group'
-                                                  : 'Gets back',
-                                              style: const TextStyle(
+                                            subtitle: Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 4,
+                                              ),
+                                              child: Text(
+                                                member.role,
+                                                style: const TextStyle(
+                                                  color: _muted,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                            trailing: IconButton(
+                                              tooltip: 'Remove member',
+                                              onPressed: () =>
+                                                  _showRemoveMemberDialog(
+                                                    context,
+                                                    ref,
+                                                    groupId,
+                                                    member.userId,
+                                                    member.username,
+                                                  ),
+                                              icon: const Icon(
+                                                Icons.person_remove_outlined,
                                                 color: _muted,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                            trailing: Text(
-                                              '₹${balance.balance.abs().toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                color: settled
-                                                    ? _muted
-                                                    : owes
-                                                    ? _danger
-                                                    : _primary,
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 14,
+                                                size: 21,
                                               ),
                                             ),
                                           );
@@ -719,234 +857,418 @@ class GroupDetailsScreen extends ConsumerWidget {
                                     ],
                                   ],
                                 ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => SettlementHistoryScreen(
-                            groupId: groupId,
-                            members: group.members,
-                          ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.history_rounded),
-                    label: const Text('View settlement history'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _primary,
-                      side: const BorderSide(color: _border),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  _SectionHeading(
-                    title: 'Expenses',
-                    subtitle: 'Shared spending in this group',
-                    trailing: TextButton.icon(
-                      onPressed: () => _createExpense(context, ref),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('Add expense'),
-                      style: TextButton.styleFrom(foregroundColor: _primary),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final expensesState = ref.watch(
-                        expensesProvider(groupId),
-                      );
+                        const SizedBox(height: 28),
+                        const _SectionHeading(
+                          title: 'Balances',
+                          subtitle: 'See who owes and who gets paid',
+                        ),
+                        const SizedBox(height: 12),
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final balancesState = ref.watch(
+                              groupBalancesProvider(groupId),
+                            );
 
-                      return expensesState.when(
-                        loading: () => const _LoadingPanel(),
-                        error: (error, stackTrace) => _ErrorPanel(
-                          message: error.toString(),
-                          onRetry: () =>
-                              ref.invalidate(expensesProvider(groupId)),
+                            return balancesState.when(
+                              loading: () => const _LoadingPanel(),
+                              error: (error, stackTrace) => _ErrorPanel(
+                                message: error.toString(),
+                                onRetry: () => ref.invalidate(
+                                  groupBalancesProvider(groupId),
+                                ),
+                              ),
+                              data: (balances) {
+                                if (balances.isEmpty) {
+                                  return const _Panel(
+                                    child: _EmptyMessage(
+                                      icon:
+                                          Icons.account_balance_wallet_outlined,
+                                      message: 'No balances available yet.',
+                                    ),
+                                  );
+                                }
+
+                                final currentUserBalance = balances
+                                    .where((b) => b.userId == currentUserId)
+                                    .firstOrNull;
+
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    if (currentUserBalance != null)
+                                      _YourBalanceCard(
+                                        balance: currentUserBalance.balance,
+                                        onSettle: currentUserBalance.balance < 0
+                                            ? () => _settleUp(
+                                                context,
+                                                ref,
+                                                group.members,
+                                              )
+                                            : null,
+                                      ),
+                                    const SizedBox(height: 10),
+                                    _Panel(
+                                      child: Column(
+                                        children: [
+                                          for (
+                                            var i = 0;
+                                            i < balances.length;
+                                            i++
+                                          ) ...[
+                                            if (i > 0)
+                                              const Divider(
+                                                height: 1,
+                                                color: _border,
+                                              ),
+                                            Builder(
+                                              builder: (context) {
+                                                final balance = balances[i];
+                                                final member = group.members
+                                                    .where(
+                                                      (m) =>
+                                                          m.userId ==
+                                                          balance.userId,
+                                                    )
+                                                    .firstOrNull;
+
+                                                if (member == null) {
+                                                  return const SizedBox.shrink();
+                                                }
+
+                                                final owes =
+                                                    balance.balance < 0;
+                                                final settled =
+                                                    balance.balance == 0;
+
+                                                return ListTile(
+                                                  contentPadding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 3,
+                                                      ),
+                                                  leading: CircleAvatar(
+                                                    backgroundColor: settled
+                                                        ? const Color(
+                                                            0xFFF0F2F1,
+                                                          )
+                                                        : owes
+                                                        ? const Color(
+                                                            0xFFFFE9E7,
+                                                          )
+                                                        : const Color(
+                                                            0xFFE2F3EA,
+                                                          ),
+                                                    child: Icon(
+                                                      settled
+                                                          ? Icons.check_rounded
+                                                          : owes
+                                                          ? Icons
+                                                                .arrow_upward_rounded
+                                                          : Icons
+                                                                .arrow_downward_rounded,
+                                                      size: 19,
+                                                      color: settled
+                                                          ? _muted
+                                                          : owes
+                                                          ? _danger
+                                                          : _primary,
+                                                    ),
+                                                  ),
+                                                  title: Text(
+                                                    member.username,
+                                                    style: const TextStyle(
+                                                      color: _text,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  subtitle: Text(
+                                                    settled
+                                                        ? 'All settled'
+                                                        : owes
+                                                        ? 'Owes the group'
+                                                        : 'Gets back',
+                                                    style: const TextStyle(
+                                                      color: _muted,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  trailing: Text(
+                                                    '₹${balance.balance.abs().toStringAsFixed(2)}',
+                                                    style: TextStyle(
+                                                      color: settled
+                                                          ? _muted
+                                                          : owes
+                                                          ? _danger
+                                                          : _primary,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
                         ),
-                        data: (expenses) {
-                          if (expenses.isEmpty) {
-                            return const _Panel(
-                              child: _EmptyMessage(
-                                icon: Icons.receipt_long_outlined,
-                                message: 'No expenses yet. Add the first expense to get started.',
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => SettlementHistoryScreen(
+                                  groupId: groupId,
+                                  members: group.members,
+                                ),
                               ),
                             );
-                          }
+                          },
+                          icon: const Icon(Icons.history_rounded),
+                          label: const Text('View settlement history'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _primary,
+                            side: const BorderSide(color: _border),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        _SectionHeading(
+                          title: 'Expenses',
+                          subtitle: 'Shared spending in this group',
+                          trailing: TextButton.icon(
+                            onPressed: () => _createExpense(context, ref),
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: const Text('Add expense'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: _primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final expensesState = ref.watch(
+                              expensesProvider(groupId),
+                            );
 
-                          return _Panel(
-                            child: Column(
-                              children: [
-                                for (var i = 0; i < expenses.length; i++) ...[
-                                  if (i > 0)
-                                    const Divider(height: 1, color: _border),
-                                  Builder(
-                                    builder: (context) {
-                                      final expense = expenses[i];
+                            return expensesState.when(
+                              loading: () => const _LoadingPanel(),
+                              error: (error, stackTrace) => _ErrorPanel(
+                                message: error.toString(),
+                                onRetry: () =>
+                                    ref.invalidate(expensesProvider(groupId)),
+                              ),
+                              data: (expenses) {
+                                if (expenses.isEmpty) {
+                                  return const _Panel(
+                                    child: _EmptyMessage(
+                                      icon: Icons.receipt_long_outlined,
+                                      message: 'No expenses yet. Add the first expense to get started.',
+                                    ),
+                                  );
+                                }
 
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: InkWell(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                onTap: () => context.push(
-                                                  '/groups/$groupId/expenses/${expense.id}',
-                                                ),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(
-                                                    6,
+                                return _Panel(
+                                  child: Column(
+                                    children: [
+                                      for (
+                                        var i = 0;
+                                        i < expenses.length;
+                                        i++
+                                      ) ...[
+                                        if (i > 0)
+                                          const Divider(
+                                            height: 1,
+                                            color: _border,
+                                          ),
+                                        Builder(
+                                          builder: (context) {
+                                            final expense = expenses[i];
+
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
                                                   ),
-                                                  child: Row(
-                                                    children: [
-                                                      Container(
-                                                        width: 44,
-                                                        height: 44,
-                                                        decoration: BoxDecoration(
-                                                          color: const Color(
-                                                            0xFFEAF0ED,
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: InkWell(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
                                                           ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                13,
-                                                              ),
-                                                        ),
-                                                        child: const Icon(
-                                                          Icons
-                                                              .receipt_long_rounded,
-                                                          color: _primary,
-                                                          size: 22,
-                                                        ),
+                                                      onTap: () => context.push(
+                                                        '/groups/$groupId/expenses/${expense.id}',
                                                       ),
-                                                      const SizedBox(width: 12),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              6,
+                                                            ),
+                                                        child: Row(
                                                           children: [
-                                                            Text(
-                                                              expense
-                                                                  .description,
-                                                              maxLines: 2,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style: const TextStyle(
-                                                                color: _text,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                                fontSize: 14,
+                                                            Container(
+                                                              width: 44,
+                                                              height: 44,
+                                                              decoration: BoxDecoration(
+                                                                color:
+                                                                    const Color(
+                                                                      0xFFEAF0ED,
+                                                                    ),
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      13,
+                                                                    ),
+                                                              ),
+                                                              child: const Icon(
+                                                                Icons
+                                                                    .receipt_long_rounded,
+                                                                color: _primary,
+                                                                size: 22,
                                                               ),
                                                             ),
                                                             const SizedBox(
-                                                              height: 5,
+                                                              width: 12,
                                                             ),
-                                                            Text(
-                                                              'My share: ${expense.myShare == null ? 'Not participating' : '₹${expense.myShare!.toStringAsFixed(2)}'}',
-                                                              style:
-                                                                  const TextStyle(
-                                                                    color:
-                                                                        _muted,
-                                                                    fontSize:
-                                                                        12,
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Text(
+                                                                    expense
+                                                                        .description,
+                                                                    maxLines: 2,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style: const TextStyle(
+                                                                      color:
+                                                                          _text,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w700,
+                                                                      fontSize:
+                                                                          14,
+                                                                    ),
                                                                   ),
+                                                                  const SizedBox(
+                                                                    height: 5,
+                                                                  ),
+                                                                  Text(
+                                                                    'My share: ${expense.myShare == null ? 'Not participating' : '₹${expense.myShare!.toStringAsFixed(2)}'}',
+                                                                    style: const TextStyle(
+                                                                      color:
+                                                                          _muted,
+                                                                      fontSize:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
                                                             ),
                                                           ],
                                                         ),
                                                       ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.end,
+                                                    children: [
+                                                      Text(
+                                                        '₹${expense.amount.toStringAsFixed(2)}',
+                                                        style: const TextStyle(
+                                                          color: _text,
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      if (isGroupOwner) ...[
+                                                        Row(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            IconButton(
+                                                              visualDensity:
+                                                                  VisualDensity
+                                                                      .compact,
+                                                              tooltip: 'Edit expense',
+                                                              onPressed: () =>
+                                                                  _editExpense(
+                                                                    context,
+                                                                    ref,
+                                                                    expense.id,
+                                                                  ),
+                                                              icon: const Icon(
+                                                                Icons
+                                                                    .edit_outlined,
+                                                                size: 19,
+                                                              ),
+                                                              color: _muted,
+                                                            ),
+                                                            IconButton(
+                                                              visualDensity:
+                                                                  VisualDensity
+                                                                      .compact,
+                                                              tooltip: 'Delete expense',
+                                                              onPressed: () =>
+                                                                  _deleteExpense(
+                                                                    context,
+                                                                    ref,
+                                                                    expense.id,
+                                                                    expense
+                                                                        .description,
+                                                                  ),
+                                                              icon: const Icon(
+                                                                Icons
+                                                                    .delete_outline_rounded,
+                                                                size: 19,
+                                                              ),
+                                                              color: _danger,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
                                                     ],
                                                   ),
-                                                ),
+                                                ],
                                               ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                Text(
-                                                  '₹${expense.amount.toStringAsFixed(2)}',
-                                                  style: const TextStyle(
-                                                    color: _text,
-                                                    fontWeight: FontWeight.w800,
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    IconButton(
-                                                      visualDensity:
-                                                          VisualDensity.compact,
-                                                      tooltip: 'Edit expense',
-                                                      onPressed: () =>
-                                                          _editExpense(
-                                                            context,
-                                                            ref,
-                                                            expense.id,
-                                                          ),
-                                                      icon: const Icon(
-                                                        Icons.edit_outlined,
-                                                        size: 19,
-                                                      ),
-                                                      color: _muted,
-                                                    ),
-                                                    IconButton(
-                                                      visualDensity:
-                                                          VisualDensity.compact,
-                                                      tooltip: 'Delete expense',
-                                                      onPressed: () =>
-                                                          _deleteExpense(
-                                                            context,
-                                                            ref,
-                                                            expense.id,
-                                                            expense.description,
-                                                          ),
-                                                      icon: const Icon(
-                                                        Icons
-                                                            .delete_outline_rounded,
-                                                        size: 19,
-                                                      ),
-                                                      color: _danger,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                            );
+                                          },
                                         ),
-                                      );
-                                    },
+                                      ],
+                                    ],
                                   ),
-                                ],
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -960,11 +1282,19 @@ class _GroupHeader extends StatelessWidget {
     required this.name,
     required this.id,
     required this.memberCount,
+    required this.isGroupOwner,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   final String name;
   final int id;
   final int memberCount;
+  final bool isGroupOwner;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  static const _danger = Color(0xFFB94141);
 
   @override
   Widget build(BuildContext context) {
@@ -998,13 +1328,18 @@ class _GroupHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 23,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+                Tooltip(
+                  message: name,
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 23,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 7),
@@ -1018,6 +1353,47 @@ class _GroupHeader extends StatelessWidget {
               ],
             ),
           ),
+          if (isGroupOwner)
+            PopupMenuButton<String>(
+              tooltip: 'Group options',
+              icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  onEdit();
+                } else if (value == 'delete') {
+                  onDelete();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined, size: 19),
+                      SizedBox(width: 10),
+                      Text('Edit group'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.delete_outline_rounded,
+                        color: _danger,
+                        size: 19,
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Delete group',
+                        style: TextStyle(color: _danger),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -1229,6 +1605,235 @@ class _ErrorPanel extends StatelessWidget {
               label: const Text('Try again'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditGroupDialog extends StatefulWidget {
+  const _EditGroupDialog({required this.currentName});
+
+  final String currentName;
+
+  @override
+  State<_EditGroupDialog> createState() => _EditGroupDialogState();
+}
+
+class _EditGroupDialogState extends State<_EditGroupDialog> {
+  late final TextEditingController _controller;
+  static const _primary = Color(0xFF176B55);
+  static const _background = Color(0xFFF6F8F7);
+  static const _text = Color(0xFF172B25);
+  static const _muted = Color(0xFF75817C);
+  static const _border = Color(0xFFE6ECE8);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.currentName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _controller.text.trim();
+
+    if (name.isNotEmpty) {
+      Navigator.of(context).pop(name);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(22, 22, 16, 22),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF176B55), Color(0xFF27876B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        color: Colors.white,
+                        size: 25,
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Edit group',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Update your group name.',
+                            style: TextStyle(
+                              color: Color(0xFFD9EEE6),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Content
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Group name',
+                      style: TextStyle(
+                        color: _text,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 9),
+                    TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      maxLength: 100,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _save(),
+                      decoration: InputDecoration(
+                        hintText: 'Enter group name',
+                        hintStyle: const TextStyle(
+                          color: Color(0xFFA0AAA5),
+                          fontSize: 13,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.groups_outlined,
+                          color: _muted,
+                        ),
+                        filled: true,
+                        fillColor: _background,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 15,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(color: _border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(color: _border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                            color: _primary,
+                            width: 1.5,
+                          ),
+                        ),
+                        counterStyle: const TextStyle(
+                          color: _muted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Footer
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: _border)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _text,
+                          side: const BorderSide(color: _border),
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primary,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 48),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                        ),
+                        child: const Text(
+                          'Save Changes',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

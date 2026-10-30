@@ -65,9 +65,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
         ),
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 520),
               child: Form(

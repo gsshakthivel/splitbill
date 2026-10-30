@@ -40,4 +40,24 @@ class GroupNotifier extends AsyncNotifier<void> {
       await repository.removeMember(groupId: groupId, userId: userId);
     });
   }
+
+  Future<void> updateGroup({required int groupId, required String name}) async {
+    state = const AsyncLoading();
+
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(groupRepositoryProvider);
+
+      await repository.updateGroup(groupId: groupId, name: name);
+    });
+  }
+
+  Future<void> deleteGroup({required int groupId}) async {
+    state = const AsyncLoading();
+
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(groupRepositoryProvider);
+
+      await repository.deleteGroup(groupId: groupId);
+    });
+  }
 }

@@ -156,316 +156,342 @@ class _EditExpenseScreenState extends ConsumerState<EditExpenseScreen> {
             data: (group) {
               final members = group.members;
 
-              return Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 680),
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(22),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF176B55), Color(0xFF104C3D)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
+              return Scrollbar(
+                thumbVisibility: true,
+                trackVisibility: true,
+                interactive: true,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+                  children: [
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 680),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text(
-                              'EDITING AMOUNT',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.6,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                const Text(
-                                  '₹',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 34,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            Container(
+                              padding: const EdgeInsets.all(22),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF176B55),
+                                    Color(0xFF104C3D),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _amountController,
-                                    enabled: !isSubmitting,
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 38,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'EDITING AMOUNT',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
-                                      letterSpacing: -1,
-                                    ),
-                                    cursorColor: Colors.white,
-                                    decoration: const InputDecoration(
-                                      hintText: '0.00',
-                                      hintStyle: TextStyle(
-                                        color: Colors.white54,
-                                        fontSize: 38,
-                                      ),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.zero,
+                                      letterSpacing: 1.6,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Group: ${group.name}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 26),
-                      const _SectionTitle(
-                        title: 'Expense details',
-                        subtitle: 'Update what this payment was for.',
-                      ),
-                      const SizedBox(height: 12),
-                      _FormCard(
-                        child: TextField(
-                          controller: _descriptionController,
-                          enabled: !isSubmitting,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Description',
-                            hintText: 'e.g. Dinner, groceries, rent',
-                            prefixIcon: Icon(Icons.receipt_long_outlined),
-                            border: InputBorder.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 26),
-                      const _SectionTitle(
-                        title: 'Paid by',
-                        subtitle: 'Who paid the bill?',
-                      ),
-                      const SizedBox(height: 12),
-                      _FormCard(
-                        child: DropdownButtonFormField<int>(
-                          initialValue: members.any((m) => m.userId == _paidBy)
-                              ? _paidBy
-                              : null,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.person_outline_rounded),
-                            labelText: 'Select payer',
-                            border: InputBorder.none,
-                          ),
-                          items: members.map((member) {
-                            return DropdownMenuItem<int>(
-                              value: member.userId,
-                              child: Text(
-                                member.username,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: isSubmitting
-                              ? null
-                              : (value) => setState(() => _paidBy = value),
-                        ),
-                      ),
-                      const SizedBox(height: 26),
-                      _SectionTitle(
-                        title: 'Split between',
-                        subtitle:
-                            '${_selectedMembers.length} of ${members.length} members selected',
-                        trailing: TextButton(
-                          onPressed: isSubmitting
-                              ? null
-                              : () {
-                                  setState(() {
-                                    if (_selectedMembers.length ==
-                                        members.length) {
-                                      _selectedMembers.clear();
-                                    } else {
-                                      _selectedMembers
-                                        ..clear()
-                                        ..addAll(members.map((m) => m.userId));
-                                    }
-                                  });
-                                },
-                          child: Text(
-                            _selectedMembers.length == members.length
-                                ? 'Clear all'
-                                : 'Select all',
-                            style: const TextStyle(
-                              color: _primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _FormCard(
-                        child: Column(
-                          children: [
-                            for (var i = 0; i < members.length; i++) ...[
-                              if (i > 0)
-                                const Divider(
-                                  height: 1,
-                                  indent: 16,
-                                  endIndent: 16,
-                                  color: _border,
-                                ),
-                              Builder(
-                                builder: (context) {
-                                  final member = members[i];
-                                  final selected = _selectedMembers.contains(
-                                    member.userId,
-                                  );
-
-                                  return CheckboxListTile(
-                                    value: selected,
-                                    onChanged: isSubmitting
-                                        ? null
-                                        : (value) {
-                                            setState(() {
-                                              if (value == true) {
-                                                _selectedMembers.add(
-                                                  member.userId,
-                                                );
-                                              } else {
-                                                _selectedMembers.remove(
-                                                  member.userId,
-                                                );
-                                              }
-                                            });
-                                          },
-                                    activeColor: _primary,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 3,
-                                    ),
-                                    controlAffinity:
-                                        ListTileControlAffinity.trailing,
-                                    secondary: CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: selected
-                                          ? const Color(0xFFE2F3EA)
-                                          : const Color(0xFFF0F2F1),
-                                      child: Text(
-                                        member.username.isNotEmpty
-                                            ? member.username[0].toUpperCase()
-                                            : '?',
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        '₹',
                                         style: TextStyle(
-                                          color: selected ? _primary : _muted,
-                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                          fontSize: 34,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _amountController,
+                                          enabled: !isSubmitting,
+                                          keyboardType:
+                                              const TextInputType.numberWithOptions(
+                                                decimal: true,
+                                              ),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 38,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: -1,
+                                          ),
+                                          cursorColor: Colors.white,
+                                          decoration: const InputDecoration(
+                                            hintText: '0.00',
+                                            hintStyle: TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 38,
+                                            ),
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Tooltip(
+                                    message: group.name,
+                                    child: Text(
+                                      'Group: ${group.name}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                      ),
                                     ),
-                                    title: Text(
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 26),
+                            const _SectionTitle(
+                              title: 'Expense details',
+                              subtitle: 'Update what this payment was for.',
+                            ),
+                            const SizedBox(height: 12),
+                            _FormCard(
+                              child: TextField(
+                                controller: _descriptionController,
+                                enabled: !isSubmitting,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                decoration: const InputDecoration(
+                                  labelText: 'Description',
+                                  hintText: 'e.g. Dinner, groceries, rent',
+                                  prefixIcon: Icon(Icons.receipt_long_outlined),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 26),
+                            const _SectionTitle(
+                              title: 'Paid by',
+                              subtitle: 'Who paid the bill?',
+                            ),
+                            const SizedBox(height: 12),
+                            _FormCard(
+                              child: DropdownButtonFormField<int>(
+                                initialValue:
+                                    members.any((m) => m.userId == _paidBy)
+                                    ? _paidBy
+                                    : null,
+                                isExpanded: true,
+                                decoration: const InputDecoration(
+                                  prefixIcon: Icon(
+                                    Icons.person_outline_rounded,
+                                  ),
+                                  labelText: 'Select payer',
+                                  border: InputBorder.none,
+                                ),
+                                items: members.map((member) {
+                                  return DropdownMenuItem<int>(
+                                    value: member.userId,
+                                    child: Text(
                                       member.username,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: isSubmitting
+                                    ? null
+                                    : (value) =>
+                                          setState(() => _paidBy = value),
+                              ),
+                            ),
+                            const SizedBox(height: 26),
+                            _SectionTitle(
+                              title: 'Split between',
+                              subtitle:
+                                  '${_selectedMembers.length} of ${members.length} members selected',
+                              trailing: TextButton(
+                                onPressed: isSubmitting
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          if (_selectedMembers.length ==
+                                              members.length) {
+                                            _selectedMembers.clear();
+                                          } else {
+                                            _selectedMembers
+                                              ..clear()
+                                              ..addAll(
+                                                members.map((m) => m.userId),
+                                              );
+                                          }
+                                        });
+                                      },
+                                child: Text(
+                                  _selectedMembers.length == members.length
+                                      ? 'Clear all'
+                                      : 'Select all',
+                                  style: const TextStyle(
+                                    color: _primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _FormCard(
+                              child: Column(
+                                children: [
+                                  for (var i = 0; i < members.length; i++) ...[
+                                    if (i > 0)
+                                      const Divider(
+                                        height: 1,
+                                        indent: 16,
+                                        endIndent: 16,
+                                        color: _border,
+                                      ),
+                                    Builder(
+                                      builder: (context) {
+                                        final member = members[i];
+                                        final selected = _selectedMembers
+                                            .contains(member.userId);
+
+                                        return CheckboxListTile(
+                                          value: selected,
+                                          onChanged: isSubmitting
+                                              ? null
+                                              : (value) {
+                                                  setState(() {
+                                                    if (value == true) {
+                                                      _selectedMembers.add(
+                                                        member.userId,
+                                                      );
+                                                    } else {
+                                                      _selectedMembers.remove(
+                                                        member.userId,
+                                                      );
+                                                    }
+                                                  });
+                                                },
+                                          activeColor: _primary,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 14,
+                                                vertical: 3,
+                                              ),
+                                          controlAffinity:
+                                              ListTileControlAffinity.trailing,
+                                          secondary: CircleAvatar(
+                                            radius: 20,
+                                            backgroundColor: selected
+                                                ? const Color(0xFFE2F3EA)
+                                                : const Color(0xFFF0F2F1),
+                                            child: Text(
+                                              member.username.isNotEmpty
+                                                  ? member.username[0]
+                                                        .toUpperCase()
+                                                  : '?',
+                                              style: TextStyle(
+                                                color: selected
+                                                    ? _primary
+                                                    : _muted,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                          title: Text(
+                                            member.username,
+                                            style: const TextStyle(
+                                              color: _text,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          subtitle: const Text(
+                                            'Included in split',
+                                            style: TextStyle(
+                                              color: _muted,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEAF3EF),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline_rounded,
+                                    color: _primary,
+                                    size: 21,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      expense.splitType == 'equal'
+                                          ? 'This expense uses an equal split. The selected members determine how the expense is shared.'
+                                          : 'Split type: ${expense.splitType}. Your existing split type will be preserved.',
                                       style: const TextStyle(
                                         color: _text,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                        height: 1.5,
                                       ),
                                     ),
-                                    subtitle: const Text(
-                                      'Included in split',
-                                      style: TextStyle(
-                                        color: _muted,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  );
-                                },
+                                  ),
+                                ],
                               ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAF3EF),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.info_outline_rounded,
-                              color: _primary,
-                              size: 21,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                expense.splitType == 'equal'
-                                    ? 'This expense uses an equal split. The selected members determine how the expense is shared.'
-                                    : 'Split type: ${expense.splitType}. Your existing split type will be preserved.',
-                                style: const TextStyle(
-                                  color: _text,
-                                  fontSize: 13,
-                                  height: 1.5,
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              height: 54,
+                              child: FilledButton.icon(
+                                onPressed: isSubmitting
+                                    ? null
+                                    : () => _submitUpdate(expense),
+                                icon: isSubmitting
+                                    ? const SizedBox(
+                                        width: 19,
+                                        height: 19,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(Icons.check_rounded),
+                                label: Text(
+                                  isSubmitting
+                                      ? 'Updating expense...'
+                                      : 'Save changes',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: _primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        height: 54,
-                        child: FilledButton.icon(
-                          onPressed: isSubmitting
-                              ? null
-                              : () => _submitUpdate(expense),
-                          icon: isSubmitting
-                              ? const SizedBox(
-                                  width: 19,
-                                  height: 19,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.check_rounded),
-                          label: Text(
-                            isSubmitting
-                                ? 'Updating expense...'
-                                : 'Save changes',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                            ),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: _primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               );
             },

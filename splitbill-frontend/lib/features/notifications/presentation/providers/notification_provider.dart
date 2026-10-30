@@ -72,6 +72,7 @@ final notificationSocketListenerProvider = Provider<void>((ref) {
 
     socketService.connect(
       baseUrl: 'https://splitbill-7uls.onrender.com',
+      // baseUrl: 'http://localhost:5000',
       token: token,
 
       onNotification: (data) {

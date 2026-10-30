@@ -128,9 +128,9 @@ class _SettleUpScreenState extends ConsumerState<SettleUpScreen> {
         ),
         data: (balances) {
           if (recipientMembers.isEmpty) {
-            return Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
                   child: Container(
@@ -205,9 +205,9 @@ class _SettleUpScreenState extends ConsumerState<SettleUpScreen> {
               .firstOrNull;
 
           return SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 520),
                   child: Form(
@@ -376,8 +376,34 @@ class _SettleUpScreenState extends ConsumerState<SettleUpScreen> {
                                 onChanged: isSubmitting
                                     ? null
                                     : (userId) {
+                                        if (userId == null ||
+                                            currentUserId == null) {
+                                          return;
+                                        }
+
+                                        final currentUserBalance = balances
+                                            .firstWhere(
+                                              (balance) =>
+                                                  balance.userId ==
+                                                  currentUserId,
+                                            );
+
+                                        final selectedBalance = balances
+                                            .firstWhere(
+                                              (balance) =>
+                                                  balance.userId == userId,
+                                            );
+
+                                        final amountToSettle =
+                                            selectedBalance.balance <
+                                                currentUserBalance.balance.abs()
+                                            ? selectedBalance.balance
+                                            : currentUserBalance.balance.abs();
+
                                         setState(() {
                                           _selectedUserId = userId;
+                                          _amountController.text =
+                                              amountToSettle.toStringAsFixed(2);
                                         });
                                       },
                                 validator: (userId) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:splitbill_frontend/features/auth/presentation/providers/auth_provider.dart';
+import 'package:splitbill_frontend/features/groups/presentation/providers/group_provider.dart';
 import 'package:splitbill_frontend/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:splitbill_frontend/features/notifications/presentation/screens/notification_history_screen.dart';
 
@@ -15,11 +16,13 @@ class HomeScreen extends ConsumerWidget {
   static const Color _background = Color(0xFFF6F8F7);
   static const Color _textPrimary = Color(0xFF172B25);
   static const Color _textSecondary = Color(0xFF75817C);
+  static const Color _danger = Color(0xFFB94141);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeNotifierProvider);
     final unreadCount = ref.watch(unreadNotificationCountProvider);
+    final overallBalanceState = ref.watch(overallBalanceProvider);
 
     return Scaffold(
       backgroundColor: _background,
@@ -97,9 +100,139 @@ class HomeScreen extends ConsumerWidget {
             tooltip: 'Account',
             icon: const Icon(Icons.more_vert_rounded),
             color: Colors.white,
-            onSelected: (value) {
+            onSelected: (value) async {
               if (value == 'logout') {
-                ref.read(authNotifierProvider.notifier).logout();
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    backgroundColor: Colors.white,
+                    surfaceTintColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                    contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                    title: Column(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFCEAE8),
+                            borderRadius: BorderRadius.circular(19),
+                          ),
+                          child: const Icon(
+                            Icons.logout_rounded,
+                            color: Color(0xFFB94141),
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        const Text(
+                          'Log out?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF172B25),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Are you sure you want to log out of your SplitBill account?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF75817C),
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF6F5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF4D6D2)),
+                          ),
+                          child: const Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                color: Color(0xFFB94141),
+                                size: 20,
+                              ),
+                              SizedBox(width: 9),
+                              Expanded(
+                                child: Text(
+                                  'You will need to log in again to access your groups.',
+                                  style: TextStyle(
+                                    color: Color(0xFF8F3935),
+                                    fontSize: 12,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    actionsPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    actions: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(false),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF172B25),
+                                side: const BorderSide(
+                                  color: Color(0xFFE6ECE8),
+                                ),
+                                minimumSize: const Size(0, 48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(13),
+                                ),
+                              ),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFB94141),
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(0, 48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(13),
+                                ),
+                              ),
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(true),
+                              child: const Text(
+                                'Log out',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true && context.mounted) {
+                  await ref.read(authNotifierProvider.notifier).logout();
+                }
               } else if (value == 'refresh') {
                 ref.read(homeNotifierProvider.notifier).refreshGroups();
               }
@@ -145,6 +278,93 @@ class HomeScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               children: [
+                overallBalanceState.when(
+                  loading: () => const SizedBox(
+                    height: 110,
+                    child: Center(
+                      child: CircularProgressIndicator(color: _primary),
+                    ),
+                  ),
+                  error: (_, _) => const SizedBox.shrink(),
+                  data: (overallBalance) {
+                    final isOwed = overallBalance.netBalance > 0;
+                    final isSettled = overallBalance.netBalance == 0;
+
+                    final amountColor = isSettled
+                        ? _textSecondary
+                        : isOwed
+                        ? _primary
+                        : _danger;
+
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      margin: const EdgeInsets.only(bottom: 28),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _textSecondary.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'OVERALL OUTSTANDING',
+                            style: TextStyle(
+                              color: _textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '₹${overallBalance.amount.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: amountColor,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                isSettled
+                                    ? Icons.check_circle_outline_rounded
+                                    : isOwed
+                                    ? Icons.arrow_downward_rounded
+                                    : Icons.arrow_upward_rounded,
+                                color: amountColor,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 7),
+                              Text(
+                                overallBalance.status,
+                                style: TextStyle(
+                                  color: amountColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          const Text(
+                            'Across all your groups',
+                            style: TextStyle(
+                              color: _textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
                 const Text(
                   'YOUR OVERVIEW',
                   style: TextStyle(
@@ -221,7 +441,11 @@ class HomeScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(18),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(18),
-                          onTap: () => context.push('/groups/${group.id}'),
+                          onTap: () {
+                            final route = '/groups/${group.id}';
+                            debugPrint('Navigating to: $route');
+                            context.push(route);
+                          },
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -252,24 +476,94 @@ class HomeScreen extends ConsumerWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        group.name,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: _textPrimary,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.3,
+                                      Tooltip(
+                                        message: group.name,
+                                        child: Text(
+                                          group.name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: _textPrimary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            height: 1.3,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(height: 5),
-                                      Text(
-                                        'Group ID: ${group.id}',
-                                        style: const TextStyle(
-                                          color: _textSecondary,
-                                          fontSize: 12,
-                                        ),
+                                      Consumer(
+                                        builder: (context, ref, child) {
+                                          final currentUserId = ref
+                                              .watch(authNotifierProvider)
+                                              .value
+                                              ?.id;
+
+                                          final balanceState = ref.watch(
+                                            groupBalancesProvider(group.id),
+                                          );
+
+                                          return balanceState.when(
+                                            loading: () => const Text(
+                                              'Loading balance...',
+                                              style: TextStyle(
+                                                color: _textSecondary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            error: (_, _) => const Text(
+                                              'Balance unavailable',
+                                              style: TextStyle(
+                                                color: _textSecondary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            data: (balances) {
+                                              if (currentUserId == null) {
+                                                return const SizedBox.shrink();
+                                              }
+
+                                              final userBalance = balances
+                                                  .where(
+                                                    (balance) =>
+                                                        balance.userId ==
+                                                        currentUserId,
+                                                  )
+                                                  .firstOrNull;
+
+                                              if (userBalance == null) {
+                                                return const SizedBox.shrink();
+                                              }
+
+                                              final amount =
+                                                  userBalance.balance;
+                                              final isSettled = amount == 0;
+                                              final isOwed = amount > 0;
+
+                                              final status = isSettled
+                                                  ? 'Settled up'
+                                                  : isOwed
+                                                  ? 'You are owed ₹${amount.toStringAsFixed(2)}'
+                                                  : 'You owe ₹${amount.abs().toStringAsFixed(2)}';
+
+                                              final statusColor = isSettled
+                                                  ? _textSecondary
+                                                  : isOwed
+                                                  ? _primary
+                                                  : _danger;
+
+                                              return Text(
+                                                status,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color: statusColor,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
                                       ),
                                     ],
                                   ),

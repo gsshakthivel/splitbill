@@ -120,251 +120,278 @@ class SettlementHistoryScreen extends ConsumerWidget {
             (total, settlement) => total + settlement.amount,
           );
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: settlements.isEmpty
-                  ? _EmptyState()
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(22),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF176B55), Color(0xFF27876B)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+          return Scrollbar(
+            thumbVisibility: true,
+            trackVisibility: true,
+            interactive: true,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: settlements.isEmpty
+                        ? _EmptyState()
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(11),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: const Icon(
-                                      Icons.account_balance_wallet_outlined,
-                                      color: Colors.white,
-                                      size: 25,
-                                    ),
+                              Container(
+                                padding: const EdgeInsets.all(22),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF176B55),
+                                      Color(0xFF27876B),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Settlement summary',
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(11),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons
+                                                .account_balance_wallet_outlined,
+                                            color: Colors.white,
+                                            size: 25,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Expanded(
+                                          child: Text(
+                                            'Settlement summary',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 24),
+                                    const Text(
+                                      'Total settled',
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFFD9EEE6),
+                                        fontSize: 13,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      '₹${totalSettled.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 7,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.14,
+                                        ),
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      child: Text(
+                                        '${settlements.length} ${settlements.length == 1 ? 'settlement' : 'settlements'} recorded',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 26),
                               const Text(
-                                'Total settled',
+                                'Recent settlements',
                                 style: TextStyle(
-                                  color: Color(0xFFD9EEE6),
-                                  fontSize: 13,
+                                  color: _text,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 5),
-                              Text(
-                                '₹${totalSettled.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.5,
-                                ),
+                              const Text(
+                                'A record of payments between group members.',
+                                style: TextStyle(color: _muted, fontSize: 13),
                               ),
-                              const SizedBox(height: 14),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                child: Text(
-                                  '${settlements.length} ${settlements.length == 1 ? 'settlement' : 'settlements'} recorded',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 26),
-                        const Text(
-                          'Recent settlements',
-                          style: TextStyle(
-                            color: _text,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text(
-                          'A record of payments between group members.',
-                          style: TextStyle(color: _muted, fontSize: 13),
-                        ),
-                        const SizedBox(height: 16),
-                        ...settlements.map((settlement) {
-                          final fromName = _memberName(settlement.fromUserId);
-                          final toName = _memberName(settlement.toUserId);
+                              const SizedBox(height: 16),
+                              ...settlements.map((settlement) {
+                                final fromName = _memberName(
+                                  settlement.fromUserId,
+                                );
+                                final toName = _memberName(settlement.toUserId);
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: _border),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE7F3EE),
-                                        borderRadius: BorderRadius.circular(15),
-                                      ),
-                                      child: const Icon(
-                                        Icons.check_circle_outline,
-                                        color: _primary,
-                                        size: 25,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: _border),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
-                                            'Settlement completed',
-                                            style: TextStyle(
-                                              color: _text,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 14,
+                                          Container(
+                                            width: 46,
+                                            height: 46,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFE7F3EE),
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                            ),
+                                            child: const Icon(
+                                              Icons.check_circle_outline,
+                                              color: _primary,
+                                              size: 25,
                                             ),
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            _formatDateTime(
-                                              settlement.createdAt,
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Settlement completed',
+                                                  style: TextStyle(
+                                                    color: _text,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  _formatDateTime(
+                                                    settlement.createdAt,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: _muted,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            style: const TextStyle(
-                                              color: _muted,
-                                              fontSize: 12,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            child: Text(
+                                              '₹${settlement.amount.toStringAsFixed(2)}',
+                                              textAlign: TextAlign.end,
+                                              style: const TextStyle(
+                                                color: _primary,
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w800,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        '₹${settlement.amount.toStringAsFixed(2)}',
-                                        textAlign: TextAlign.end,
-                                        style: const TextStyle(
-                                          color: _primary,
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w800,
-                                        ),
+                                      const SizedBox(height: 18),
+                                      Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 17,
+                                            backgroundColor: const Color(
+                                              0xFFE7F3EE,
+                                            ),
+                                            child: Text(
+                                              _initials(fromName),
+                                              style: const TextStyle(
+                                                color: _primary,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 9),
+                                          Expanded(
+                                            child: Text(
+                                              fromName,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: _text,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Icon(
+                                            Icons.arrow_forward_rounded,
+                                            color: _muted,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          CircleAvatar(
+                                            radius: 17,
+                                            backgroundColor: const Color(
+                                              0xFFE8EFFD,
+                                            ),
+                                            child: Text(
+                                              _initials(toName),
+                                              style: const TextStyle(
+                                                color: Color(0xFF365DA8),
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 9),
+                                          Expanded(
+                                            child: Text(
+                                              toName,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: _text,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 18),
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 17,
-                                      backgroundColor: const Color(0xFFE7F3EE),
-                                      child: Text(
-                                        _initials(fromName),
-                                        style: const TextStyle(
-                                          color: _primary,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 9),
-                                    Expanded(
-                                      child: Text(
-                                        fromName,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: _text,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: _muted,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    CircleAvatar(
-                                      radius: 17,
-                                      backgroundColor: const Color(0xFFE8EFFD),
-                                      child: Text(
-                                        _initials(toName),
-                                        style: const TextStyle(
-                                          color: Color(0xFF365DA8),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 9),
-                                    Expanded(
-                                      child: Text(
-                                        toName,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: _text,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
             ),
           );
         },
