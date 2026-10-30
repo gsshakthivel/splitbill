@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbill_frontend/app/core/errors/api_exception.dart';
+import 'package:splitbill_frontend/features/home/presentation/providers/home_provider.dart';
+import 'package:splitbill_frontend/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:splitbill_frontend/features/notifications/presentation/providers/socket_provider.dart';
 
 import '../../data/models/user.dart';
@@ -27,6 +29,12 @@ class AuthNotifier extends AsyncNotifier<User?> {
       }
 
       rethrow;
+    }
+  }
+
+  void clearError() {
+    if (state.hasError) {
+      state = AsyncData(null);
     }
   }
 
@@ -67,6 +75,10 @@ class AuthNotifier extends AsyncNotifier<User?> {
     final storage = ref.read(secureStorageProvider);
 
     await storage.deleteToken();
+
+    ref.invalidate(homeNotifierProvider);
+    ref.invalidate(notificationsProvider);
+    ref.invalidate(unreadNotificationCountProvider);
 
     state = const AsyncData(null);
   }

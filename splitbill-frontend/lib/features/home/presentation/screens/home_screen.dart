@@ -295,26 +295,22 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: homeState.maybeWhen(
-        data: (groups) => groups.isNotEmpty
-            ? FloatingActionButton.extended(
-                onPressed: () async {
-                  final result = await context.push('/create-group');
-                  if (result == true) {
-                    await ref
-                        .read(homeNotifierProvider.notifier)
-                        .refreshGroups();
-                  }
-                },
-                backgroundColor: _primary,
-                foregroundColor: Colors.white,
-                elevation: 3,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text(
-                  'Create group',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              )
-            : null,
+        data: (groups) => FloatingActionButton.extended(
+          onPressed: () async {
+            final result = await context.push('/create-group');
+            if (result == true) {
+              await ref.read(homeNotifierProvider.notifier).refreshGroups();
+            }
+          },
+          backgroundColor: _primary,
+          foregroundColor: Colors.white,
+          elevation: 3,
+          icon: const Icon(Icons.add_rounded),
+          label: const Text(
+            'Create group',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
         orElse: () => null,
       ),
     );
@@ -370,11 +366,6 @@ class _EmptyGroupsState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          const Icon(
-            Icons.arrow_downward_rounded,
-            color: Color(0xFF176B55),
-            size: 22,
-          ),
         ],
       ),
     );

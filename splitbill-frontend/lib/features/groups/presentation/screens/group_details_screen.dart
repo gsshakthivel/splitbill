@@ -859,7 +859,7 @@ class GroupDetailsScreen extends ConsumerWidget {
                                                               height: 5,
                                                             ),
                                                             Text(
-                                                              'My share: ₹${expense.myShare.toStringAsFixed(2)}',
+                                                              'My share: ${expense.myShare == null ? 'Not participating' : '₹${expense.myShare!.toStringAsFixed(2)}'}',
                                                               style:
                                                                   const TextStyle(
                                                                     color:

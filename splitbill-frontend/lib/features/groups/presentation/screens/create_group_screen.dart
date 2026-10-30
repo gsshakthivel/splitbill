@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -165,6 +166,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                             textCapitalization: TextCapitalization.words,
                             textInputAction: TextInputAction.done,
                             maxLength: 100,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(100),
+                            ],
                             onFieldSubmitted: (_) {
                               if (!isSubmitting) _createGroup();
                             },

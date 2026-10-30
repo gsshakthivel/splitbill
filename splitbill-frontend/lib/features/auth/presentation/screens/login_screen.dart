@@ -284,7 +284,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () => context.go('/register'),
+                          onPressed: () {
+                            ref
+                                .read(authNotifierProvider.notifier)
+                                .clearError();
+                            context.go('/register');
+                          },
                           child: const Text(
                             'Register',
                             style: TextStyle(
