@@ -11,7 +11,7 @@ The project is built to demonstrate practical backend development skills, includ
 * User registration and login
 * JWT-based authentication
 * Password hashing with bcrypt
-* Group creation and member management
+* Group creation, updating, deletion and member management
 * Expense creation, updating, and deletion
 * Equal expense splitting
 * Runtime balance calculation
@@ -509,8 +509,38 @@ The SplitBill backend exposes RESTful API endpoints under the `/api/v1` prefix.
 | `POST`   | `/api/v1/groups`                          | Create a group                        | JWT  |
 | `GET`    | `/api/v1/groups`                          | Get groups for the authenticated user | JWT  |
 | `GET`    | `/api/v1/groups/:groupId`                 | Get group details                     | JWT  |
+| `PUT`    | `/api/v1/groups/:groupId`                 | Update group name (owner only)        | JWT  |
+| `DELETE` | `/api/v1/groups/:groupId`                 | Delete a group (owner only)           | JWT  |
 | `POST`   | `/api/v1/groups/:groupId/members`         | Add a member to a group               | JWT  |
 | `DELETE` | `/api/v1/groups/:groupId/members/:userId` | Remove a member from a group          | JWT  |
+
+### Group Management
+
+#### Update Group
+
+Updates the name of an existing group.
+
+- **Method:** `PUT`
+- **Endpoint:** `/api/v1/groups/:groupId`
+- **Authentication:** Required (JWT)
+- **Authorization:** Only the group owner can update the group.
+
+#### Delete Group
+
+Permanently deletes an eligible group.
+
+- **Method:** `DELETE`
+- **Endpoint:** `/api/v1/groups/:groupId`
+- **Authentication:** Required (JWT)
+- **Authorization:** Only the group owner can delete the group.
+
+Deletion rules:
+
+- Only the group owner can delete a group.
+- Groups containing expenses cannot be deleted.
+- Groups containing settlements cannot be deleted.
+- Associated notification recipients, notifications, and group memberships are deleted when the group is eligible for deletion.
+- All deletion operations are performed within a database transaction.
 
 ### Expenses
 

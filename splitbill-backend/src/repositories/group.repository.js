@@ -150,4 +150,91 @@ const getGroupBalances = async (groupId) => {
     return result;
 };
 
-export { createGroup, addUserToGroup, getGroupsByUserId, getGroupMember, getGroupMemberTransaction, getGroupMembers, addGroupMember, getGroupDetailsByGroupId, hasUserExpensesInGroup, removeGroupMember, getGroupBalances };
+
+const getGroupByIdForUpdate = async (connection, groupId) => {
+    const query = `
+        SELECT id, name, created_by
+        FROM \`groups\`
+        WHERE id = ?
+        FOR UPDATE
+    `;
+
+    const [result] = await connection.execute(query, [groupId]);
+    return result;
+};
+
+const updateGroupName = async (connection, groupId, name) => {
+    const query = `
+        UPDATE \`groups\`
+        SET name = ?
+        WHERE id = ?
+    `;
+
+    const [result] = await connection.execute(query, [name, groupId]);
+    return result;
+};
+
+const hasGroupFinancialRecords = async (connection, groupId) => {
+    const query = `
+        SELECT EXISTS (
+            SELECT 1 FROM expenses WHERE group_id = ?
+            UNION ALL
+            SELECT 1 FROM settlements WHERE group_id = ?
+        ) AS has_records
+    `;
+
+    const [result] = await connection.execute(query, [
+        groupId,
+        groupId
+    ]);
+
+    return Boolean(Number(result[0]?.has_records));
+};
+
+const deleteGroupNotificationRecipients = async (connection, groupId) => {
+    const query = `
+        DELETE nr
+        FROM notification_recipients AS nr
+        INNER JOIN notifications AS n
+            ON nr.notification_id = n.id
+        WHERE n.group_id = ?
+    `;
+
+    const [result] = await connection.execute(query, [groupId]);
+    return result;
+};
+
+const deleteGroupNotifications = async (connection, groupId) => {
+    const query = `
+        DELETE FROM notifications
+        WHERE group_id = ?
+    `;
+
+    const [result] = await connection.execute(query, [groupId]);
+    return result;
+};
+
+const deleteGroupMembers = async (connection, groupId) => {
+    const query = `
+        DELETE FROM group_members
+        WHERE group_id = ?
+    `;
+
+    const [result] = await connection.execute(query, [groupId]);
+    return result;
+};
+
+const deleteGroup = async (connection, groupId) => {
+    const query = `
+        DELETE FROM \`groups\`
+        WHERE id = ?
+    `;
+
+    const [result] = await connection.execute(query, [groupId]);
+    return result;
+};
+
+export { createGroup, addUserToGroup, getGroupsByUserId, getGroupMember, getGroupMemberTransaction, 
+    getGroupMembers, addGroupMember, getGroupDetailsByGroupId, hasUserExpensesInGroup, removeGroupMember, 
+    getGroupBalances, getGroupByIdForUpdate, updateGroupName, hasGroupFinancialRecords, deleteGroupNotificationRecipients, 
+    deleteGroupNotifications, deleteGroupMembers, deleteGroup };
