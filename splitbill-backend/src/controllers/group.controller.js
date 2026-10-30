@@ -1,4 +1,6 @@
-import { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, removeGroupMemberService, getGroupBalancesService } from "../services/group.service.js";
+import { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, 
+    removeGroupMemberService, getGroupBalancesService, updateGroupService,
+    deleteGroupService } from "../services/group.service.js";
 import AppError from "../utils/errors.js";
 
 const createGroup = async (req, res) => {
@@ -88,7 +90,57 @@ const getGroupBalances = async (req, res) => {
     res.status(200).json({
     message: "Group balances fetched successfully",
     data: result
-});
+    });
 }
 
-export { createGroup, getGroups, addGroupMember, getGroupDetails, removeGroupMember, getGroupBalances };
+const updateGroup = async (req, res) => {
+    const { groupId } = req.params;
+    const { name } = req.body;
+    const { id } = req.user;
+
+    const groupIdNumber = Number(groupId);
+
+    if (!Number.isInteger(groupIdNumber) || groupIdNumber <= 0) {
+        throw new AppError("Invalid groupId", 400);
+    }
+
+    if (
+        typeof name !== "string" ||
+        name.trim().length === 0 ||
+        name.trim().length > 100
+    ) {
+        throw new AppError(
+            "Group name must be between 1 and 100 characters",
+            400
+        );
+    }
+
+    const result = await updateGroupService(
+        groupIdNumber,
+        name.trim(),
+        id
+    );
+
+    res.status(200).json({
+        message: "Group updated successfully",
+        data: result
+    });
+};
+
+const deleteGroup = async (req, res) => {
+    const { groupId } = req.params;
+    const { id } = req.user;
+
+    const groupIdNumber = Number(groupId);
+
+    if (!Number.isInteger(groupIdNumber) || groupIdNumber <= 0) {
+        throw new AppError("Invalid groupId", 400);
+    }
+
+    const result = await deleteGroupService(groupIdNumber, id);
+
+    res.status(200).json(result);
+};
+
+export { createGroup, getGroups, addGroupMember, getGroupDetails, removeGroupMember, 
+    getGroupBalances, updateGroup, deleteGroup };

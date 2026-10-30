@@ -16,7 +16,14 @@ jest.unstable_mockModule("../src/repositories/group.repository.js", () => ({
     hasUserExpensesInGroup: jest.fn(),
     removeGroupMember: jest.fn(),
     getGroupBalances: jest.fn(),
-    getGroupMemberTransaction: jest.fn()
+    getGroupMemberTransaction: jest.fn(),
+    getGroupByIdForUpdate: jest.fn(),
+    updateGroupName: jest.fn(),
+    hasGroupFinancialRecords: jest.fn(),
+    deleteGroupNotificationRecipients: jest.fn(),
+    deleteGroupNotifications: jest.fn(),
+    deleteGroupMembers: jest.fn(),
+    deleteGroup: jest.fn()
 }));
 
 jest.unstable_mockModule("../src/repositories/user.repository.js", () => ({
@@ -38,7 +45,9 @@ const {
     addGroupMemberService,
     getGroupDetailsService,
     removeGroupMemberService,
-    getGroupBalancesService
+    getGroupBalancesService,
+    updateGroupService,
+    deleteGroupService
 } = await import("../src/services/group.service.js");
 
 const pool = (await import("../src/config/db.js")).default;
@@ -286,4 +295,330 @@ test("getGroupBalancesService should return group balances", async () => {
 
     expect(groupRepository.getGroupBalances)
         .toHaveBeenCalledWith(1);
+});
+
+// ==================== UPDATE GROUP TESTS ====================
+
+test("updateGroupService should update group name when requested by owner", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([
+        { id: 1, name: "Trip", created_by: 10 }
+    ]);
+
+    groupRepository.getGroupMemberTransaction.mockResolvedValue([
+        { role: "owner" }
+    ]);
+
+    groupRepository.updateGroupName.mockResolvedValue({
+        affectedRows: 1
+    });
+
+    const result = await updateGroupService(1, "Updated Trip", 10);
+
+    expect(result).toEqual({
+        id: 1,
+        name: "Updated Trip",
+        createdBy: 10
+    });
+
+    expect(groupRepository.updateGroupName).toHaveBeenCalledWith(
+        connection,
+        1,
+        "Updated Trip"
+    );
+
+    expect(connection.commit).toHaveBeenCalled();
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+test("updateGroupService should reject a non-owner", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([
+        { id: 1, name: "Trip", created_by: 10 }
+    ]);
+
+    groupRepository.getGroupMemberTransaction.mockResolvedValue([
+        { role: "member" }
+    ]);
+
+    await expect(
+        updateGroupService(1, "Updated Trip", 20)
+    ).rejects.toThrow("User not permitted to update this group");
+
+    expect(groupRepository.updateGroupName).not.toHaveBeenCalled();
+    expect(connection.commit).not.toHaveBeenCalled();
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+test("updateGroupService should reject when group does not exist", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([]);
+
+    await expect(
+        updateGroupService(999, "Updated Trip", 10)
+    ).rejects.toThrow("Group not found");
+
+    expect(groupRepository.getGroupMemberTransaction).not.toHaveBeenCalled();
+    expect(groupRepository.updateGroupName).not.toHaveBeenCalled();
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+test("updateGroupService should rollback when updating group fails", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([
+        { id: 1, name: "Trip", created_by: 10 }
+    ]);
+
+    groupRepository.getGroupMemberTransaction.mockResolvedValue([
+        { role: "owner" }
+    ]);
+
+    groupRepository.updateGroupName.mockRejectedValue(
+        new Error("Database update failed")
+    );
+
+    await expect(
+        updateGroupService(1, "Updated Trip", 10)
+    ).rejects.toThrow("Database update failed");
+
+    expect(connection.commit).not.toHaveBeenCalled();
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+// ==================== DELETE GROUP TESTS ====================
+
+test("deleteGroupService should delete an empty group when requested by owner", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([
+        { id: 1, name: "Trip", created_by: 10 }
+    ]);
+
+    groupRepository.getGroupMemberTransaction.mockResolvedValue([
+        { role: "owner" }
+    ]);
+
+    groupRepository.hasGroupFinancialRecords.mockResolvedValue(false);
+
+    groupRepository.deleteGroup.mockResolvedValue({
+        affectedRows: 1
+    });
+
+    const result = await deleteGroupService(1, 10);
+
+    expect(result).toEqual({
+        message: "Group deleted successfully"
+    });
+
+    expect(
+        groupRepository.deleteGroupNotificationRecipients
+    ).toHaveBeenCalledWith(connection, 1);
+
+    expect(
+        groupRepository.deleteGroupNotifications
+    ).toHaveBeenCalledWith(connection, 1);
+
+    expect(
+        groupRepository.deleteGroupMembers
+    ).toHaveBeenCalledWith(connection, 1);
+
+    expect(groupRepository.deleteGroup).toHaveBeenCalledWith(
+        connection,
+        1
+    );
+
+    expect(connection.commit).toHaveBeenCalled();
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+test("deleteGroupService should reject a non-owner", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([
+        { id: 1, name: "Trip", created_by: 10 }
+    ]);
+
+    groupRepository.getGroupMemberTransaction.mockResolvedValue([
+        { role: "member" }
+    ]);
+
+    await expect(
+        deleteGroupService(1, 20)
+    ).rejects.toThrow("User not permitted to delete this group");
+
+    expect(groupRepository.hasGroupFinancialRecords).not.toHaveBeenCalled();
+    expect(groupRepository.deleteGroup).not.toHaveBeenCalled();
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+test("deleteGroupService should reject when group does not exist", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([]);
+
+    await expect(
+        deleteGroupService(999, 10)
+    ).rejects.toThrow("Group not found");
+
+    expect(groupRepository.getGroupMemberTransaction).not.toHaveBeenCalled();
+    expect(groupRepository.hasGroupFinancialRecords).not.toHaveBeenCalled();
+    expect(groupRepository.deleteGroup).not.toHaveBeenCalled();
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+test("deleteGroupService should reject deletion when group has expenses", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([
+        { id: 1, name: "Trip", created_by: 10 }
+    ]);
+
+    groupRepository.getGroupMemberTransaction.mockResolvedValue([
+        { role: "owner" }
+    ]);
+
+    groupRepository.hasGroupFinancialRecords.mockResolvedValue(true);
+
+    await expect(
+        deleteGroupService(1, 10)
+    ).rejects.toThrow(
+        "Cannot delete a group with existing expenses or settlements"
+    );
+
+    expect(groupRepository.deleteGroup).not.toHaveBeenCalled();
+    expect(connection.commit).not.toHaveBeenCalled();
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+test("deleteGroupService should reject deletion when group has settlements", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([
+        { id: 1, name: "Trip", created_by: 10 }
+    ]);
+
+    groupRepository.getGroupMemberTransaction.mockResolvedValue([
+        { role: "owner" }
+    ]);
+
+    groupRepository.hasGroupFinancialRecords.mockResolvedValue(true);
+
+    await expect(
+        deleteGroupService(1, 10)
+    ).rejects.toThrow(
+        "Cannot delete a group with existing expenses or settlements"
+    );
+
+    expect(groupRepository.deleteGroup).not.toHaveBeenCalled();
+    expect(connection.commit).not.toHaveBeenCalled();
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
+});
+
+test("deleteGroupService should rollback when group deletion fails", async () => {
+    const connection = {
+        beginTransaction: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn(),
+        release: jest.fn()
+    };
+
+    pool.getConnection.mockResolvedValue(connection);
+
+    groupRepository.getGroupByIdForUpdate.mockResolvedValue([
+        { id: 1, name: "Trip", created_by: 10 }
+    ]);
+
+    groupRepository.getGroupMemberTransaction.mockResolvedValue([
+        { role: "owner" }
+    ]);
+
+    groupRepository.hasGroupFinancialRecords.mockResolvedValue(false);
+
+    groupRepository.deleteGroup.mockRejectedValue(
+        new Error("Database deletion failed")
+    );
+
+    await expect(
+        deleteGroupService(1, 10)
+    ).rejects.toThrow("Database deletion failed");
+
+    expect(connection.commit).not.toHaveBeenCalled();
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalled();
 });

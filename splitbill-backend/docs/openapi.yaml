@@ -156,6 +156,17 @@ components:
           type: integer
           example: 1
 
+    UpdateGroupRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Weekend Trip Updated
+
     AddMemberRequest:
       type: object
       required: [userId]
@@ -611,6 +622,102 @@ paths:
                 $ref: "#/components/schemas/Error"
         "403":
           description: User is not permitted to view group details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Groups]
+      summary: Update group name
+      description: Only the group owner can update the group name.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroupRequest"
+      responses:
+        "200":
+          description: Group updated successfully
+          content:
+            application/json:
+              example:
+                message: Group updated successfully
+                data:
+                  id: 1
+                  name: Weekend Trip Updated
+                  createdBy: 1
+        "400":
+          description: Invalid groupId or group name
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: User is not permitted to update this group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Groups]
+      summary: Delete a group
+      description: >
+        Only the group owner can delete a group.
+        Deletion is prevented if the group has any expenses or settlements.
+        Associated notifications, notification recipients, and memberships
+        are deleted when the group is eligible for deletion.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+      responses:
+        "200":
+          description: Group deleted successfully
+          content:
+            application/json:
+              example:
+                message: Group deleted successfully
+        "400":
+          description: Invalid groupId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: User is not permitted to delete this group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Cannot delete a group with existing expenses or settlements
           content:
             application/json:
               schema:

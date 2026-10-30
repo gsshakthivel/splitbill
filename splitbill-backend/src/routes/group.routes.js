@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { createGroup, getGroups, addGroupMember, getGroupDetails, removeGroupMember, getGroupBalances } from "../controllers/group.controller.js";
+import { createGroup, getGroups, addGroupMember, getGroupDetails, removeGroupMember, getGroupBalances,
+ updateGroup, deleteGroup } from "../controllers/group.controller.js";
 import authenticate from "../middleware/auth.middleware.js";
 import expenseRoutes from "./expense.routes.js";
 import settlementRoutes from "./settlement.routes.js";
@@ -9,6 +10,10 @@ const router = Router();
 router.post("/", authenticate, createGroup);
 
 router.get("/", authenticate, getGroups);
+
+router.put("/:groupId", authenticate, updateGroup);
+
+router.delete("/:groupId", authenticate, deleteGroup);
 
 router.post("/:groupId/members", authenticate, addGroupMember);
 

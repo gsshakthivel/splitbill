@@ -3,7 +3,9 @@ import { createGroup as createGroupRepository, addUserToGroup, getGroupsByUserId
      getGroupMember, addGroupMember as addGroupMemberRepository, getGroupDetailsByGroupId as getGroupDetailsByGroupIdRepository, 
      hasUserExpensesInGroup, removeGroupMember as removeGroupMemberRepository,
      getGroupBalances as getGroupBalancesRepository, 
-     getGroupMemberTransaction} from "../repositories/group.repository.js";
+     getGroupMemberTransaction, getGroupByIdForUpdate,
+     updateGroupName, hasGroupFinancialRecords, deleteGroupNotificationRecipients,
+deleteGroupNotifications, deleteGroupMembers, deleteGroup} from "../repositories/group.repository.js";
 import { findUserById } from "../repositories/user.repository.js";
 import { createNotification as createNotificationRepository, createNotificationRecipient as createNotificationRecipientRepository } from "../repositories/notifications.repository.js";
 import AppError from "../utils/errors.js";
@@ -171,4 +173,114 @@ const getGroupBalancesService = async (groupId, currentUserId) => {
     return balanceResult;
 }
 
-export { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, removeGroupMemberService, getGroupBalancesService };
+const updateGroupService = async (groupId, name, currentUserId) => {
+    const connection = await pool.getConnection();
+    let transactionStarted = false;
+
+    try {
+        await connection.beginTransaction();
+        transactionStarted = true;
+
+        const group = await getGroupByIdForUpdate(connection, groupId);
+
+        if (group.length === 0) {
+            throw new AppError("Group not found", 404);
+        }
+
+        const membership = await getGroupMemberTransaction(
+            connection,
+            groupId,
+            currentUserId
+        );
+
+        if (membership.length === 0 || membership[0].role !== "owner") {
+            throw new AppError("User not permitted to update this group", 403);
+        }
+
+        await updateGroupName(connection, groupId, name);
+
+        await connection.commit();
+
+        return {
+            id: group[0].id,
+            name,
+            createdBy: group[0].created_by
+        };
+    } catch (error) {
+        if (transactionStarted) {
+            await connection.rollback();
+        }
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
+const deleteGroupService = async (groupId, currentUserId) => {
+    const connection = await pool.getConnection();
+    let transactionStarted = false;
+
+    try {
+        await connection.beginTransaction();
+        transactionStarted = true;
+
+        const group = await getGroupByIdForUpdate(connection, groupId);
+
+        if (group.length === 0) {
+            throw new AppError("Group not found", 404);
+        }
+
+        const membership = await getGroupMemberTransaction(
+            connection,
+            groupId,
+            currentUserId
+        );
+
+        if (membership.length === 0 || membership[0].role !== "owner") {
+            throw new AppError("User not permitted to delete this group", 403);
+        }
+
+        // Prevent deletion if expenses or settlements exist.
+        const hasFinancialRecords = await hasGroupFinancialRecords(
+            connection,
+            groupId
+        );
+
+        if (hasFinancialRecords) {
+            throw new AppError(
+                "Cannot delete a group with existing expenses or settlements",
+                409
+            );
+        }
+
+        // Delete associated notification history.
+        await deleteGroupNotificationRecipients(connection, groupId);
+        await deleteGroupNotifications(connection, groupId);
+
+        // Delete group memberships.
+        await deleteGroupMembers(connection, groupId);
+
+        // Finally, delete the group.
+        const result = await deleteGroup(connection, groupId);
+
+        if (result.affectedRows !== 1) {
+            throw new AppError("Group could not be deleted", 500);
+        }
+
+        await connection.commit();
+
+        return {
+            message: "Group deleted successfully"
+        };
+    } catch (error) {
+        if (transactionStarted) {
+            await connection.rollback();
+        }
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
+export { createGroupService, getGroupsService, addGroupMemberService, getGroupDetailsService, 
+    removeGroupMemberService, getGroupBalancesService, updateGroupService, deleteGroupService };
