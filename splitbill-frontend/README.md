@@ -109,6 +109,54 @@ assets/
     └── splitbill_splash.png
 
 
+## 🎥 Application Demo
+
+[▶ Watch SplitBill Mobile Walkthrough](../demo/splitbill-mobile-walkthrough.mp4)
+
+
+## 📸 Screenshots
+
+### Web Application
+
+![Home Dashboard](../screenshots/web/home.png)
+
+![Group Details](../screenshots/web/group-details.png)
+
+![Expense Details](../screenshots/web/expense-details.png)
+
+### Android Application
+
+#### Authentication and Dashboard
+
+![Home](../screenshots/android/home.png)
+
+#### Groups and Members
+
+![Group Details](../screenshots/android/group-details-top.png)
+
+![Group Details - Balances and Expenses](../screenshots/android/group-details-bottom.png)
+
+![Add Member](../screenshots/android/add-member.png)
+
+#### Expenses
+
+![Add Expense](../screenshots/android/add-expense-top.png)
+
+![Add Expense - Participants](../screenshots/android/add-expense-bottom.png)
+
+![Expense Details](../screenshots/android/expense-details-top.png)
+
+![Expense Details - Split](../screenshots/android/expense-details-bottom.png)
+
+#### Settlements and Notifications
+
+![Settle Up](../screenshots/android/settle-up.png)
+
+![Settlement History](../screenshots/android/settlement-history.png)
+
+![Notifications](../screenshots/android/notifications.png)
+
+
 ### Architecture Overview
 
 - **Data Layer:** Contains models and repositories responsible for handling application data and communicating with backend APIs.
