@@ -77,6 +77,40 @@ SplitBill uses a Flutter client that communicates with a Node.js REST API. MySQL
                        |
                  Flutter Client
 
+
+## 🎥 Application Demo
+
+Watch the SplitBill Android application walkthrough:
+
+[▶ Watch Mobile App Demo](./demo/splitbill-mobile-walkthrough.mp4)
+
+## 📱 Application Screenshots
+
+### Web Application
+
+|                 Login                                 |                 Home Dashboard                            |
+|                 ---                                   |                      ---                                  |
+|   ![Login](./screenshots/web/login.png)               |      ![Home](./screenshots/web/home.png)                  |
+
+|                   Group Details                       |                  Expense Details                          |
+|                        ---                            |                        ---                                |
+| ![Group Details](./screenshots/web/group-details.png) | ![Expense Details](./screenshots/web/expense-details.png) |
+
+### Android Application
+
+|                 Home                    |                 Create Group                            |
+|                 ---                     |                      ---                                |
+| ![Home](./screenshots/android/home.png) | ![Create Group](./screenshots/android/create-group.png) |
+
+|                      Group Details                            |                 Settle Up                         |
+|                           ---                                 |                    ---                            |
+| ![Group Details](./screenshots/android/group-details-top.png) | ![Settle Up](./screenshots/android/settle-up.png) |
+
+|                         Expense Details                           |               Notifications                   |
+|                              ---                                  |                    ---                        |
+| ![Expense Details](./screenshots/android/expense-details-top.png) | ![Notifications](./screenshots/android/notifications.png) |
+
+
 ### Frontend
 
 The Flutter application is organized by feature and separates data access, state management, and presentation.
