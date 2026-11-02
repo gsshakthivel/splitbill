@@ -111,50 +111,55 @@ assets/
 
 ## 🎥 Application Demo
 
-[▶ Watch SplitBill Mobile Walkthrough](../demo/splitbill-mobile-walkthrough.mp4)
+Watch the SplitBill Android application walkthrough:
 
+[▶ Watch Mobile App Walkthrough](../demo/splitbill-mobile-walkthrough.mp4)
 
 ## 📸 Screenshots
 
 ### Web Application
 
-![Home Dashboard](../screenshots/web/home.png)
+| Home Dashboard | Group Details |
+|---|---|
+| ![Home Dashboard](../screenshots/web/home.png) | ![Group Details](../screenshots/web/group-details.png) |
 
-![Group Details](../screenshots/web/group-details.png)
-
-![Expense Details](../screenshots/web/expense-details.png)
+| Expense Details | Notifications |
+|---|---|
+| ![Expense Details](../screenshots/web/expense-details.png) | ![Notifications](../screenshots/web/notifications.png) |
 
 ### Android Application
 
 #### Authentication and Dashboard
 
-![Home](../screenshots/android/home.png)
+![Home Dashboard](../screenshots/android/home.jpeg)
 
 #### Groups and Members
 
-![Group Details](../screenshots/android/group-details-top.png)
+![Create Group](../screenshots/android/create-group.jpeg)
 
-![Group Details - Balances and Expenses](../screenshots/android/group-details-bottom.png)
+![Group Details - Members and Balances](../screenshots/android/group-details-1.jpeg)
 
-![Add Member](../screenshots/android/add-member.png)
+![Group Details - Expenses](../screenshots/android/group-details-2.jpeg)
+
+![Add Member](../screenshots/android/add-member.jpeg)
 
 #### Expenses
 
-![Add Expense](../screenshots/android/add-expense-top.png)
+![Create Expense - Details](../screenshots/android/create-expense-1.jpeg)
 
-![Add Expense - Participants](../screenshots/android/add-expense-bottom.png)
+![Create Expense - Participants](../screenshots/android/create-expense-2.jpeg)
 
-![Expense Details](../screenshots/android/expense-details-top.png)
+![Expense Details](../screenshots/android/expense-details-1.jpeg)
 
-![Expense Details - Split](../screenshots/android/expense-details-bottom.png)
+![Expense Details - Split Information](../screenshots/android/expense-details-2.jpeg)
 
 #### Settlements and Notifications
 
-![Settle Up](../screenshots/android/settle-up.png)
+![Settle Up](../screenshots/android/settle-up.jpeg)
 
-![Settlement History](../screenshots/android/settlement-history.png)
+![Settlement History](../screenshots/android/settlement-history.jpeg)
 
-![Notifications](../screenshots/android/notifications.png)
+![Notifications](../screenshots/android/notifications.jpeg)
 
 
 ### Architecture Overview
