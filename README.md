@@ -30,7 +30,7 @@ This portfolio project demonstrates full-stack development using Flutter, Node.j
 
 Watch the SplitBill Android application walkthrough:
 
-[▶ Watch Mobile App Walkthrough](./demo/splitbill-mobile-walkthrough.mp4)
+[▶ Watch Mobile App Walkthrough](https://github.com/gsshakthivel/splitbill/releases/download/demo-v1.0/splitbill-mobile-walkthrough.mp4)
 
 ## 📸 Application Screenshots
 
