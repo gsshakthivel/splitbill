@@ -26,9 +26,45 @@ This portfolio project demonstrates full-stack development using Flutter, Node.j
 - Responsive Flutter interface
 - API validation and centralized error handling
 
-## Screenshots
+## 🎥 Application Demo
 
-<!-- Add application screenshots here when ready. -->
+Watch the SplitBill Android application walkthrough:
+
+[▶ Watch Mobile App Walkthrough](https://github.com/gsshakthivel/splitbill/releases/download/demo-v1.0/splitbill-mobile-walkthrough.mp4)
+
+## 📸 Application Screenshots
+
+### Web Application
+
+|                Login                  |          Home Dashboard             |
+|                 ---                   |                ---                  |
+| ![Login](./screenshots/web/login.png) | ![Home](./screenshots/web/home.png) |
+
+|                   Group Details                       |               Expense Details                |
+|                       ---                             |                     ---                      |
+| ![Group Details](./screenshots/web/group-details.png) | ![Expense Details](./screenshots/web/expense-details.png) |
+
+|                  Settle Up                    |                    Notifications                      |
+|                     ---                       |                         ---                           |
+| ![Settle Up](./screenshots/web/settle-up.png) | ![Notifications](./screenshots/web/notifications.png) |
+
+### Android Application
+
+|                  Home                    |                       Create Group                       |
+|                  ---                     |                           ---                            |
+| ![Home](./screenshots/android/home.jpeg) | ![Create Group](./screenshots/android/create-group.jpeg) |
+
+|                        Group Details                         |                Add Member               |
+|                            ---                               |                   ---                   |
+| ![Group Details](./screenshots/android/group-details-1.jpeg) | ![Add Member](./screenshots/android/add-member.jpeg) |
+
+|                         Expense Details                          |             Settle Up               |
+|                               ---                                |                ---                  |
+| ![Expense Details](./screenshots/android/expense-details-1.jpeg) | ![Settle Up](./screenshots/android/settle-up.jpeg) |
+
+|                         Settlement History                           |          Notifications          |
+|                                 ---                                  |               ---               |
+| ![Settlement History](./screenshots/android/settlement-history.jpeg) | ![Notifications](./screenshots/android/notifications.jpeg) |
 
 ## Tech Stack
 
@@ -76,40 +112,6 @@ SplitBill uses a Flutter client that communicates with a Node.js REST API. MySQL
               Real-time Notifications
                        |
                  Flutter Client
-
-
-## 🎥 Application Demo
-
-Watch the SplitBill Android application walkthrough:
-
-[▶ Watch Mobile App Demo](./demo/splitbill-mobile-walkthrough.mp4)
-
-## 📱 Application Screenshots
-
-### Web Application
-
-|                 Login                                 |                 Home Dashboard                            |
-|                 ---                                   |                      ---                                  |
-|   ![Login](./screenshots/web/login.png)               |      ![Home](./screenshots/web/home.png)                  |
-
-|                   Group Details                       |                  Expense Details                          |
-|                        ---                            |                        ---                                |
-| ![Group Details](./screenshots/web/group-details.png) | ![Expense Details](./screenshots/web/expense-details.png) |
-
-### Android Application
-
-|                 Home                    |                 Create Group                            |
-|                 ---                     |                      ---                                |
-| ![Home](./screenshots/android/home.png) | ![Create Group](./screenshots/android/create-group.png) |
-
-|                      Group Details                            |                 Settle Up                         |
-|                           ---                                 |                    ---                            |
-| ![Group Details](./screenshots/android/group-details-top.png) | ![Settle Up](./screenshots/android/settle-up.png) |
-
-|                         Expense Details                           |               Notifications                   |
-|                              ---                                  |                    ---                        |
-| ![Expense Details](./screenshots/android/expense-details-top.png) | ![Notifications](./screenshots/android/notifications.png) |
-
 
 ### Frontend
 
